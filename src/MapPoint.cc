@@ -70,6 +70,15 @@ MapPoint::MapPoint(const cv::Mat &Pos, Map* pMap, Frame* pFrame, const int &idxF
     mnId=nNextId++;
 }
 
+MapPoint::MapPoint(Map *pMap, const size_t id) :
+  mnFirstKFid(-1), mnFirstFrame(-1), nObs(0), mnTrackReferenceForFrame(0), mnLastFrameSeen(0),
+  mnBALocalForKF(0), mnFuseCandidateForKF(0),mnLoopPointForKF(0), mnCorrectedByKF(0),
+  mnCorrectedReference(0), mnBAGlobalForKF(0), mpRefKF(static_cast<KeyFrame*>(NULL)), mnVisible(1),
+  mnFound(1), mbBad(false), mpReplaced(NULL), mpMap(pMap), mnId(id)
+{
+
+}
+
 void MapPoint::SetWorldPos(const cv::Mat &Pos)
 {
     unique_lock<mutex> lock2(mGlobalMutex);
@@ -416,6 +425,256 @@ int MapPoint::PredictScale(const float &currentDist, Frame* pF)
     return nScale;
 }
 
+void MapPoint::SaveToFile(ofstream &f)//, set<size_t> &sKnownKFs, set<size_t> &sKnownMPs)
+{
+//    if(this->mId.first < 10) cout << "Saving MP " << mId.first << "|" << mId.second << endl;
 
+//    unique_lock<mutex> lockOut(mMutexOut,defer_lock);
+    unique_lock<mutex> lockFeat(mMutexFeatures,defer_lock);
+    unique_lock<mutex> lockPos(mMutexPos,defer_lock);
+
+    lock(lockFeat,lockPos);
+
+    f.write((char*)&mnId, sizeof(mnId));
+    f.write((char*)&mnFirstKFid, sizeof(mnFirstKFid));
+    f.write((char*)&mnFirstFrame, sizeof(mnFirstFrame));
+    f.write((char*)&nObs, sizeof(nObs));
+//    if(this->mId.first < 10) cout << "nObs MP " << mId.first << "|" << mId.second << ": " << nObs << endl;
+    f.write((char*)&mTrackProjX, sizeof(mTrackProjX));
+    f.write((char*)&mTrackProjY, sizeof(mTrackProjY));
+    f.write((char*)&mbTrackInView, sizeof(mbTrackInView));
+    f.write((char*)&mnTrackScaleLevel, sizeof(mnTrackScaleLevel));
+    f.write((char*)&mTrackViewCos, sizeof(mTrackViewCos));
+    f.write((char*)&mnTrackReferenceForFrame, sizeof(mnTrackReferenceForFrame));
+    f.write((char*)&mnLastFrameSeen, sizeof(mnLastFrameSeen));
+    f.write((char*)&mnBALocalForKF, sizeof(mnBALocalForKF));
+    f.write((char*)&mnFuseCandidateForKF, sizeof(mnFuseCandidateForKF));
+//    f.write((char*)&mInsertedWithKF, sizeof(mInsertedWithKF));
+//    KeyFrame::wp(mLoopPointForKF_LC,f);
+//    KeyFrame::wp(mCorrectedByKF_LC,f);
+//    f.write((char*)&mCorrectedReference_LC, sizeof(mCorrectedReference_LC));
+//    f.write((char*)&mbLoopCorrected, sizeof(mbLoopCorrected));
+//    KeyFrame::wp(mLoopPointForKF_MM,f);
+//    KeyFrame::wp(mCorrectedByKF_MM,f);
+//    f.write((char*)&mCorrectedReference_MM, sizeof(mCorrectedReference_MM));
+    f.write((char*)&mnBAGlobalForKF, sizeof(mnBAGlobalForKF));
+//    KeyFrame::wmat(mPosGBA,f);
+
+    KeyFrame::wmat(mWorldPos,f);
+//    if(this->mId.first < 10) cout << "mWorldPos MP " << mId.first << "|" << mId.second << ": " << mWorldPos << endl;
+//    KeyFrame::wmat(mRefPos,f);
+//    f.write((char*)&mbPoseLock, sizeof(mbPoseLock));
+//    f.write((char*)&mbPoseChanged, sizeof(mbPoseChanged));
+
+    u_int16_t numobs = mObservations.size();
+    f.write((char*)&numobs, sizeof(numobs));
+//    if(this->mId.first < 10) cout << "numobs MP " << mId.first << "|" << mId.second << ": " << numobs << endl;
+    for(std::map<KeyFrame*,size_t>::iterator mit = mObservations.begin();mit!=mObservations.end();++mit)
+    {
+        KeyFrame* pKFi = mit->first;
+        size_t id = mit->second;
+
+        f.write((char*)&pKFi->mnId, sizeof(pKFi->mnId));
+        f.write((char*)&id, sizeof(id));
+
+//        bool bLock;
+//        if(mObservationsLock.count(pKFi))
+//            bLock = true;
+//        else
+//            bLock = false;
+
+//        f.write((char*)&bLock, sizeof(bLock));
+
+//        if(!(sKnownKFs.count(pKFi->mId)))
+//            cout << COUTERROR << "MP " << mId.first << "|" << mId.second << ": Observation KF " << pKFi->mId.first << "|" << pKFi->mId.second << " not known" << endl;
+    }
+
+//    f.write((char*)&mMaxObsKFId, sizeof(mMaxObsKFId));
+    KeyFrame::wmat(mNormalVector,f);
+//    if(this->mId.first < 10) cout << "mNormalVector MP " << mId.first << "|" << mId.second << ": " << mNormalVector << endl;
+
+//    cout << "MP-mDescriptor.type: " << mDescriptor.type() << endl;
+    KeyFrame::wmat(mDescriptor,f);
+
+    if(mpRefKF)
+    {
+        f.write((char*)&mpRefKF->mnId, sizeof(mpRefKF->mnId));
+
+//        if(!(sKnownKFs.count(mpRefKF->mId)))
+//            cout << COUTERROR << "MP " << mId.first << "|" << mId.second << ": mpRefKF " << mpRefKF->mId.first << "|" << mpRefKF->mId.second << " not known" << endl;
+    }
+    else
+    {
+        size_t val = KFRANGE;
+        f.write((char*)&val, sizeof(val));
+        f.write((char*)&val, sizeof(val));
+    }
+
+
+    f.write((char*)&mnVisible, sizeof(mnVisible));
+    f.write((char*)&mnFound, sizeof(mnFound));
+    f.write((char*)&mbBad, sizeof(mbBad));
+
+    if(mpReplaced)
+    {
+        f.write((char*)&mpReplaced->mnId, sizeof(mpReplaced->mnId));
+
+//        if(!(sKnownMPs.count(mpReplaced->mId)))
+//            cout << COUTERROR << "MP " << mId.first << "|" << mId.second << ": mpReplaced MP " << mpReplaced->mId.first << "|" << mpReplaced->mId.second << " not known" << endl;
+    }
+    else
+    {
+        size_t val = MPRANGE;
+        f.write((char*)&val, sizeof(val));
+        f.write((char*)&val, sizeof(val));
+    }
+
+    f.write((char*)&mfMinDistance, sizeof(mfMinDistance));
+    f.write((char*)&mfMaxDistance, sizeof(mfMaxDistance));
+
+    int finalvalue = rand();
+    f.write((char*)&finalvalue, sizeof(finalvalue));
+//    if(this->mId.first < 10) cout << "finalvalue MP " << mId.first << "|" << mId.second << ": " << finalvalue << endl;
+}
+
+void MapPoint::LoadFromFile(ifstream &f)
+{
+//    if(this->mId.first < 10)
+//        cout << "Loading MP " << mId.first << "|" << mId.second << endl;
+
+    {
+//        unique_lock<mutex> lockOut(mMutexOut,defer_lock);
+        unique_lock<mutex> lockFeat(mMutexFeatures,defer_lock);
+        unique_lock<mutex> lockPos(mMutexPos,defer_lock);
+
+        lock(lockFeat,lockPos);
+
+        f.read((char*)&mnId, sizeof(mnId));
+        f.read((char*)&mnFirstKFid, sizeof(mnFirstKFid));
+        f.read((char*)&mnFirstFrame, sizeof(mnFirstFrame));
+        f.read((char*)&nObs, sizeof(nObs));
+//        if(this->mId.first < 10) cout << "nObs MP " << mId.first << "|" << mId.second << ": " << nObs << endl;
+        f.read((char*)&mTrackProjX, sizeof(mTrackProjX));
+        f.read((char*)&mTrackProjY, sizeof(mTrackProjY));
+        f.read((char*)&mbTrackInView, sizeof(mbTrackInView));
+        f.read((char*)&mnTrackScaleLevel, sizeof(mnTrackScaleLevel));
+        f.read((char*)&mTrackViewCos, sizeof(mTrackViewCos));
+        f.read((char*)&mnTrackReferenceForFrame, sizeof(mnTrackReferenceForFrame));
+        f.read((char*)&mnLastFrameSeen, sizeof(mnLastFrameSeen));
+        f.read((char*)&mnBALocalForKF, sizeof(mnBALocalForKF));
+        f.read((char*)&mnFuseCandidateForKF, sizeof(mnFuseCandidateForKF));
+//        f.read((char*)&mInsertedWithKF, sizeof(mInsertedWithKF));
+//        KeyFrame::rp(mLoopPointForKF_LC,f);
+//        KeyFrame::rp(mCorrectedByKF_LC,f);
+//        f.read((char*)&mCorrectedReference_LC, sizeof(mCorrectedReference_LC));
+//        f.read((char*)&mbLoopCorrected, sizeof(mbLoopCorrected));
+//        KeyFrame::rp(mLoopPointForKF_MM,f);
+//        KeyFrame::rp(mCorrectedByKF_MM,f);
+//        f.read((char*)&mCorrectedReference_MM, sizeof(mCorrectedReference_MM));
+        f.read((char*)&mnBAGlobalForKF, sizeof(mnBAGlobalForKF));
+//        KeyFrame::rmat(mPosGBA,f,3,1,5);
+
+        KeyFrame::rmat(mWorldPos,f,3,1,5);
+//        if(this->mId.first < 10) cout << "mWorldPos MP " << mId.first << "|" << mId.second << ": " << mWorldPos << endl;
+//        KeyFrame::rmat(mRefPos,f,3,1,5);
+//        f.read((char*)&mbPoseLock, sizeof(mbPoseLock));
+//        f.read((char*)&mbPoseChanged, sizeof(mbPoseChanged));
+
+        u_int16_t numobs;
+        f.read((char*)&numobs, sizeof(numobs));
+//        if(this->mId.first < 10) cout << "numobs MP " << mId.first << "|" << mId.second << ": " << numobs << endl;
+        for(int idx=0;idx<numobs;++idx)
+        {
+            size_t IDi;
+            size_t id;
+            bool bLock;
+
+            f.read((char*)&IDi, sizeof(IDi));
+            f.read((char*)&id, sizeof(id));
+//            f.read((char*)&bLock, sizeof(bLock));
+
+            KeyFrame* pKFi = mpMap->GetKfPtr(IDi);
+
+//            if(!pKFi)
+//                pKFi = mpMap->GetErasedKfPtr(IDi);
+
+            if(!pKFi)
+                pKFi = mpMap->ReserveKF(IDi);
+
+            if(!pKFi)
+                cout << "ERROR: Keyframe does not exist!!" << endl;
+
+            mObservations[pKFi] = id;
+
+//            if(bLock)
+//                mObservationsLock[pKFi] = true;
+        }
+
+//        f.read((char*)&mMaxObsKFId, sizeof(mMaxObsKFId));
+        KeyFrame::rmat(mNormalVector,f,3,1,5);
+//        if(this->mId.first < 10) cout << "mNormalVector MP " << mId.first << "|" << mId.second << ": " << mNormalVector << endl;
+
+        KeyFrame::rmat(mDescriptor,f,1,32,0);
+
+        {
+            size_t IDi;
+            f.read((char*)&IDi, sizeof(IDi));
+            if(IDi == KFRANGE)
+                mpRefKF = nullptr;
+            else
+            {
+                KeyFrame* pKFi = mpMap->GetKfPtr(IDi);
+
+//                if(!pKFi)
+//                    pKFi = mpMap->GetErasedKfPtr(IDi);
+
+                if(!pKFi)
+                    pKFi = mpMap->ReserveKF(IDi);
+
+                if(!pKFi)
+                    cout << "ERROR: Keyframe does not exist!!" << endl;
+
+                mpRefKF = pKFi;
+            }
+        }
+
+        f.read((char*)&mnVisible, sizeof(mnVisible));
+        f.read((char*)&mnFound, sizeof(mnFound));
+        f.read((char*)&mbBad, sizeof(mbBad));
+
+        {
+            size_t IDi;
+            f.read((char*)&IDi, sizeof(IDi));
+            if(IDi == MPRANGE)
+                mpReplaced = nullptr;
+            else
+            {
+                MapPoint* pMPi = mpMap->GetMpPtr(IDi);
+
+//                if(!pMPi)
+//                    pMPi = mpMap->GetErasedMpPtr(IDi);
+
+                if(!pMPi)
+                    pMPi = mpMap->ReserveMP(IDi);
+
+                if(!pMPi)
+                    cout << "ERROR: Map point does not exist!!" << endl;
+
+                mpReplaced = pMPi;
+            }
+        }
+
+        f.read((char*)&mfMinDistance, sizeof(mfMinDistance));
+        f.read((char*)&mfMaxDistance, sizeof(mfMaxDistance));
+
+        int finalvalue;
+        f.read((char*)&finalvalue, sizeof(finalvalue));
+//        if(this->mId.first < 10) cout << "finalvalue MP " << mId.first << "|" << mId.second << ": " << finalvalue << endl;
+    }
+
+
+    //------------
+//    mbIsEmpty = false;
+}
 
 } //namespace ORB_SLAM

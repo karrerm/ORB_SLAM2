@@ -56,6 +56,17 @@ KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB):
     SetPose(F.mTcw);    
 }
 
+KeyFrame::KeyFrame(Map *pMap, const size_t id) :
+  mnGridCols(FRAME_GRID_COLS), mnGridRows(FRAME_GRID_ROWS),
+  mnTrackReferenceForFrame(0), mnFuseTargetForKF(0), mnBALocalForKF(0), mnBAFixedForKF(0),
+  mnLoopQuery(0), mnLoopWords(0), mnRelocQuery(0), mnRelocWords(0), mnBAGlobalForKF(0),
+  mbFirstConnection(true), mpParent(NULL), mbNotErase(false),
+  mbToBeErased(false), mbBad(false), mpMap(pMap), mnId(id), mnFrameId(id)
+{
+
+
+}
+
 void KeyFrame::ComputeBoW()
 {
     if(mBowVec.empty() || mFeatVec.empty())
@@ -660,6 +671,619 @@ float KeyFrame::ComputeSceneMedianDepth(const int q)
     sort(vDepths.begin(),vDepths.end());
 
     return vDepths[(vDepths.size()-1)/q];
+}
+
+void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &sKnownMPs)
+{
+//    if(this->mId.first < 10) cout << "Saving KF " << mId.first << "|" << mId.second << endl;
+
+    unique_lock<mutex> lock1(mMutexFeatures,defer_lock);
+    unique_lock<mutex> lock2(mMutexConnections,defer_lock);
+    unique_lock<mutex> lock3(mMutexPose,defer_lock);
+
+    lock(lock1,lock2,lock3);
+
+//    int matsize = 0;
+//    bool matinit = false;
+
+//    f.write((char*)&mdServerTimestamp, sizeof(mdServerTimestamp));
+    f.write((char*)&mTimeStamp, sizeof(mTimeStamp));
+//    f.write((char*)&mdInsertStamp, sizeof(mdInsertStamp));
+    f.write((char*)&mnFrameId, sizeof(mnFrameId));
+    f.write((char*)&mnId, sizeof(mnId));
+    f.write((char*)&mnGridCols, sizeof(mnGridCols));
+    f.write((char*)&mnGridRows, sizeof(mnGridRows));
+    f.write((char*)&mfGridElementWidthInv, sizeof(mfGridElementWidthInv));
+    f.write((char*)&mfGridElementHeightInv, sizeof(mfGridElementHeightInv));
+    f.write((char*)&mnTrackReferenceForFrame, sizeof(mnTrackReferenceForFrame));
+    f.write((char*)&mnFuseTargetForKF, sizeof(mnFuseTargetForKF));
+    f.write((char*)&mnBALocalForKF, sizeof(mnBALocalForKF));
+    f.write((char*)&mnBAFixedForKF, sizeof(mnBAFixedForKF));
+    f.write((char*)&mnLoopQuery, sizeof(mnLoopQuery));
+//    f.write((char*)&mnMatchQuery, sizeof(mnMatchQuery));
+    f.write((char*)&mnLoopWords, sizeof(mnLoopWords));
+    f.write((char*)&mLoopScore, sizeof(mLoopScore));
+    f.write((char*)&mnRelocQuery, sizeof(mnRelocQuery));
+    f.write((char*)&mnRelocWords, sizeof(mnRelocWords));
+    f.write((char*)&mRelocScore, sizeof(mRelocScore));
+//    matsize = mTcwGBA.rows;
+//    f.write((char*)&matsize, sizeof(matsize));
+//    if(matsize > 0)
+//        wmat(mTcwGBA,f);
+//    matsize = mTcwBefGBA.rows;
+//    f.write((char*)&matsize, sizeof(matsize));
+//    if(matsize > 0)
+//        wmat(mTcwBefGBA,f);
+    f.write((char*)&mnBAGlobalForKF, sizeof(mnBAGlobalForKF));
+//    f.write((char*)&mbLoopCorrected, sizeof(mbLoopCorrected));
+//    wp(mCorrected_MM,f);
+//    f.write((char*)&mfDistToCurKF, sizeof(mfDistToCurKF));
+
+    f.write((char*)&fx, sizeof(fx));
+    f.write((char*)&fy, sizeof(fy));
+    f.write((char*)&cx, sizeof(cx));
+    f.write((char*)&cy, sizeof(cy));
+    f.write((char*)&invfx, sizeof(invfx));
+    f.write((char*)&invfy, sizeof(invfy));
+    f.write((char*)&N, sizeof(N));
+
+//    cout << "N KF " << mId.first << "|" << mId.second << ": " << N << endl;
+
+    u_int16_t numkeys = mvKeysUn.size();
+    f.write((char*)&numkeys, sizeof(numkeys));
+    for(int idx=0;idx<mvKeysUn.size();++idx)
+    {
+        cv::KeyPoint kp = mvKeysUn[idx];
+        f.write((char*)&kp.pt.x, sizeof(kp.pt.x));
+        f.write((char*)&kp.pt.y, sizeof(kp.pt.y));
+        f.write((char*)&kp.angle, sizeof(kp.angle));
+        f.write((char*)&kp.octave, sizeof(kp.octave));
+        f.write((char*)&kp.response, sizeof(kp.response));
+        f.write((char*)&kp.size, sizeof(kp.size));
+    }
+
+//    cout << "numkeys KF " << mId.first << "|" << mId.second << ": " << numkeys << endl;
+
+    u_int16_t numdescs = mDescriptors.rows;
+    f.write((char*)&numdescs, sizeof(numdescs));
+//    cout << "mDescriptors.type: " << mDescriptors.type() << endl;
+    for(int idx=0;idx<mDescriptors.rows;++idx)
+        for(int idy=0;idy<mDescriptors.cols;++idy)
+            f.write((char*)&mDescriptors.at<uint8_t>(idx,idy), sizeof(u_int8_t));
+
+//    cout << "numdescs KF " << mId.first << "|" << mId.second << ": " << numdescs << endl;
+
+//    matsize = mTcp.rows;
+//    f.write((char*)&matsize, sizeof(matsize));
+//    if(matsize > 0)
+//    matinit = !(!mTcp);mTcp.
+//    f.write((char*)&matinit, sizeof(matinit));
+//    cout << "mTcp initialized: " << matinit << endl;
+//    if(matinit)
+//    if(mId.first != 0)
+//    cout << "mTcp:" << endl;
+//    cout << mTcp << endl;
+//    cout << "mTcp.at<float>(1,1): " << mTcp.at<float>(1,1) << endl;
+        wmat(mTcp,f);
+
+    f.write((char*)&mnScaleLevels, sizeof(mnScaleLevels));
+    f.write((char*)&mfScaleFactor, sizeof(mfScaleFactor));
+    f.write((char*)&mfLogScaleFactor, sizeof(mfLogScaleFactor));
+    for(int idx=0;idx<mvScaleFactors.size();++idx)
+        f.write((char*)&mvScaleFactors[idx], sizeof(float));
+    for(int idx=0;idx<mvLevelSigma2.size();++idx)
+        f.write((char*)&mvLevelSigma2[idx], sizeof(float));
+    for(int idx=0;idx<mvInvLevelSigma2.size();++idx)
+        f.write((char*)&mvInvLevelSigma2[idx], sizeof(float));
+
+    f.write((char*)&mnMinX, sizeof(mnMinX));
+    f.write((char*)&mnMinY, sizeof(mnMinY));
+    f.write((char*)&mnMaxX, sizeof(mnMaxX));
+    f.write((char*)&mnMaxY, sizeof(mnMaxY));
+    wmat(mK,f);
+
+//    cout << "mnMaxY KF " << mId.first << "|" << mId.second << ": " << mnMaxY << endl;
+
+    wmat(Tcw,f);
+    wmat(Twc,f);
+//    wmat(Ow,f);
+//    f.write((char*)&mbPoseLock, sizeof(mbPoseLock));
+//    f.write((char*)&mbPoseChanged, sizeof(mbPoseChanged));
+//    f.write((char*)&mdPoseTime, sizeof(mdPoseTime));
+//    wmat(Cw,f);
+
+    u_int16_t numMPs = mvpMapPoints.size();
+    f.write((char*)&numMPs, sizeof(numMPs));
+    for(int idx=0;idx<mvpMapPoints.size();++idx)
+    {
+        MapPoint* pMPi = mvpMapPoints[idx];
+        if(pMPi)
+        {
+            f.write((char*)&pMPi->mnId, sizeof(pMPi->mnId));
+        }
+        else
+        {
+            size_t val = MPRANGE;
+            f.write((char*)&val, sizeof(val));
+            f.write((char*)&val, sizeof(val));
+        }
+
+//        bool bLock = mvbMapPointsLock[idx];
+//        f.write((char*)&bLock, sizeof(bLock));
+    }
+
+//    cout << "numMPs KF " << mId.first << "|" << mId.second << ": " << numMPs << endl;
+
+    u_int16_t numConKFs = mConnectedKeyFrameWeights.size();
+    f.write((char*)&numConKFs, sizeof(numConKFs));
+    for(std::map<KeyFrame*,int>::iterator mit = mConnectedKeyFrameWeights.begin();mit!=mConnectedKeyFrameWeights.end();++mit)
+    {
+        KeyFrame* pKFi = mit->first;
+        int w = mit->second;
+        if(!pKFi)
+        {
+           cout << "NULLPTR in mConnectedKeyFrameWeights" << endl;
+//            cout << COUTFATAL<< "NULLPTR in mConnectedKeyFrameWeights" << endl;
+//            KILLSYS
+        }
+        f.write((char*)&pKFi->mnId, sizeof(pKFi->mnId));
+        f.write((char*)&w, sizeof(w));
+
+//        if(!(sKnownKFs.count(pKFi->mId)))
+//            cout << COUTERROR << "KF " << mId.first << "|" << mId.second << ": ConKF " << pKFi->mId.first << "|" << pKFi->mId.second << " not known" << endl;
+    }
+
+//    cout << "numConKFs KF " << mId.first << "|" << mId.second << ": " << numConKFs << endl;
+
+    f.write((char*)&mbFirstConnection, sizeof(mbFirstConnection));
+
+    if(mpParent)
+    {
+        f.write((char*)&mpParent->mnId, sizeof(mpParent->mnId));
+//        cout << "IDpar.second KF " << mId.first << "|" << mId.second << ": " << mpParent->mId.second << endl;
+
+//        if(!(sKnownKFs.count(mpParent->mId)))
+//            cout << COUTERROR << "KF " << mId.first << "|" << mId.second << ": mpParent " << mpParent->mId.first << "|" << mpParent->mId.second << " not known" << endl;
+    }
+    else
+    {
+        size_t val = KFRANGE;
+        f.write((char*)&val, sizeof(val));
+        f.write((char*)&val, sizeof(val));
+//        cout << "IDpar.second KF " << mId.first << "|" << mId.second << ": " << val << endl;
+    }
+
+    u_int16_t numChildren = mspChildrens.size();
+    f.write((char*)&numChildren, sizeof(numChildren));
+    for(set<KeyFrame*>::iterator sit=mspChildrens.begin();sit!=mspChildrens.end();++sit)
+    {
+        KeyFrame* pKFi = *sit;
+        f.write((char*)&pKFi->mnId, sizeof(pKFi->mnId));
+
+//        if(!(sKnownKFs.count(pKFi->mId)))
+//            cout << COUTERROR << "KF " << mId.first << "|" << mId.second << ": Child KF " << pKFi->mId.first << "|" << pKFi->mId.second << " not known" << endl;
+    }
+
+//    cout << "numChildren KF " << mId.first << "|" << mId.second << ": " << numChildren << endl;
+
+    u_int16_t numLoopEdges = mspLoopEdges.size();
+    f.write((char*)&numLoopEdges, sizeof(numLoopEdges));
+    for(set<KeyFrame*>::iterator sit=mspLoopEdges.begin();sit!=mspLoopEdges.end();++sit)
+    {
+        KeyFrame* pKFi = *sit;
+        f.write((char*)&pKFi->mnId, sizeof(pKFi->mnId));
+
+//        if(!(sKnownKFs.count(pKFi->mId)))
+//            cout << COUTERROR << "KF " << mId.first << "|" << mId.second << ": Loop KF " << pKFi->mId.first << "|" << pKFi->mId.second << " not known" << endl;
+    }
+
+//    cout << "numLoopEdges KF " << mId.first << "|" << mId.second << ": " << numLoopEdges << endl;
+
+    f.write((char*)&mbBad, sizeof(mbBad));
+
+    int finalvalue = rand();
+    f.write((char*)&finalvalue, sizeof(finalvalue));
+//    if(this->mId.first < 10) cout << "finalvalue KF " << mId.first << "|" << mId.second << ": " << finalvalue << endl;
+}
+
+void KeyFrame::LoadFromFile(ifstream &f)
+{
+//    if(this->mId.first < 10) cout << "Loading KF " << mId.first << "|" << mId.second << endl;
+
+    {
+//        unique_lock<mutex> lockOut(mMutexOut,defer_lock);
+        unique_lock<mutex> lock1(mMutexFeatures,defer_lock);
+        unique_lock<mutex> lock2(mMutexConnections,defer_lock);
+        unique_lock<mutex> lock3(mMutexPose,defer_lock);
+
+        lock(lock1,lock2,lock3);
+
+//        int matsize = 0;
+//        bool matinit = false;
+
+//        f.read((char*)&mdServerTimestamp, sizeof(mdServerTimestamp));
+        f.read((char*)&mTimeStamp, sizeof(mTimeStamp));
+//        f.read((char*)&mdInsertStamp, sizeof(mdInsertStamp));
+        f.read((char*)&mnFrameId, sizeof(mnFrameId));
+        f.read((char*)&mnId, sizeof(mnId));
+        f.read((char*)&mnGridCols, sizeof(mnGridCols));
+        f.read((char*)&mnGridRows, sizeof(mnGridRows));
+        f.read((char*)&mfGridElementWidthInv, sizeof(mfGridElementWidthInv));
+        f.read((char*)&mfGridElementHeightInv, sizeof(mfGridElementHeightInv));
+        f.read((char*)&mnTrackReferenceForFrame,sizeof(mnTrackReferenceForFrame));
+        f.read((char*)&mnFuseTargetForKF, sizeof(mnFuseTargetForKF));
+        f.read((char*)&mnBALocalForKF, sizeof(mnBALocalForKF));
+        f.read((char*)&mnBAFixedForKF, sizeof(mnBAFixedForKF));
+        f.read((char*)&mnLoopQuery, sizeof(mnLoopQuery));
+
+        f.read((char*)&mnLoopWords, sizeof(mnLoopWords));
+        f.read((char*)&mLoopScore, sizeof(mLoopScore));
+        f.read((char*)&mnRelocQuery, sizeof(mnRelocQuery));
+        f.read((char*)&mnRelocWords, sizeof(mnRelocWords));
+        f.read((char*)&mRelocScore, sizeof(mRelocScore));
+//        f.read((char*)&matsize, sizeof(matsize));
+//        if(matsize > 0)
+//            rmat(mTcwGBA,f,4,4,5);
+//        f.read((char*)&matsize, sizeof(matsize));
+//        if(matsize > 0)
+//            rmat(mTcwBefGBA,f,4,4,5);
+//        f.read((char*)&mnBAGlobalForKF, sizeof(mnBAGlobalForKF));
+//        f.read((char*)&mbLoopCorrected, sizeof(mbLoopCorrected));
+//        rp(mCorrected_MM,f);
+//        f.read((char*)&mfDistToCurKF, sizeof(mfDistToCurKF));
+
+        f.read((char*)&fx, sizeof(fx));
+        f.read((char*)&fy, sizeof(fy));
+        f.read((char*)&cx, sizeof(cx));
+        f.read((char*)&cy, sizeof(cy));
+        f.read((char*)&invfx, sizeof(invfx));
+        f.read((char*)&invfy, sizeof(invfy));
+        f.read((char*)&N, sizeof(N));
+
+//        cout << "N KF " << mId.first << "|" << mId.second << ": " << N << endl;
+
+        u_int16_t numkeys;
+        f.read((char*)&numkeys, sizeof(numkeys));
+        for(int idx=0;idx<numkeys;++idx)
+        {
+            cv::KeyPoint kp;
+            f.read((char*)&kp.pt.x, sizeof(kp.pt.x));
+            f.read((char*)&kp.pt.y, sizeof(kp.pt.y));
+            f.read((char*)&kp.angle, sizeof(kp.angle));
+            f.read((char*)&kp.octave, sizeof(kp.octave));
+            f.read((char*)&kp.response, sizeof(kp.response));
+            f.read((char*)&kp.size, sizeof(kp.size));
+            mvKeysUn.push_back(kp);
+        }
+
+//        cout << "numkeys KF " << mId.first << "|" << mId.second << ": " << numkeys << endl;
+
+        u_int16_t numdescs;
+        f.read((char*)&numdescs, sizeof(numdescs));
+        mDescriptors = cv::Mat(numdescs,32,0);
+        for(int idx=0;idx<numdescs;++idx)
+            for(int idy=0;idy<32;++idy)
+            {
+                uint8_t val;
+                f.read((char*)&val, sizeof(val));
+                mDescriptors.at<uint8_t>(idx,idy) = val;
+            }
+
+//        cout << "numdescs KF " << mId.first << "|" << mId.second << ": " << numdescs << endl;
+
+//        f.read((char*)&matsize, sizeof(matsize));
+//        if(matsize > 0)
+//        f.read((char*)&matinit, sizeof(matinit));
+//        if(matinit)
+//        if(mId.first != 0)
+            rmat(mTcp,f,4,4,5);
+
+        f.read((char*)&mnScaleLevels, sizeof(mnScaleLevels));
+        f.read((char*)&mfScaleFactor, sizeof(mfScaleFactor));
+        f.read((char*)&mfLogScaleFactor, sizeof(mfLogScaleFactor));
+        for(int idx=0;idx<8;++idx)
+        {
+            float val;
+            f.read((char*)&val, sizeof(val));
+            mvScaleFactors.push_back(val);
+        }
+        for(int idx=0;idx<8;++idx)
+        {
+            float val;
+            f.read((char*)&val, sizeof(val));
+            mvLevelSigma2.push_back(val);
+        }
+        for(int idx=0;idx<8;++idx)
+        {
+            float val;
+            f.read((char*)&val, sizeof(val));
+            mvInvLevelSigma2.push_back(val);
+        }
+
+        f.read((char*)&mnMinX, sizeof(mnMinX));
+        f.read((char*)&mnMinY, sizeof(mnMinY));
+        f.read((char*)&mnMaxX, sizeof(mnMaxX));
+        f.read((char*)&mnMaxY, sizeof(mnMaxY));
+        rmat(mK,f,3,3,5);
+
+//        cout << "mnMaxY KF " << mId.first << "|" << mId.second << ": " << mnMaxY << endl;
+
+        rmat(Tcw,f,4,4,5);
+        rmat(Twc,f,4,4,5);
+//        rmat(Ow,f);
+//        f.read((char*)&mbPoseLock, sizeof(mbPoseLock));
+//        f.read((char*)&mbPoseChanged, sizeof(mbPoseChanged));
+//        f.read((char*)&mdPoseTime, sizeof(mdPoseTime));
+
+        u_int16_t numMPs;
+        f.read((char*)&numMPs, sizeof(numMPs));
+        for(int idx=0;idx<numMPs;++idx)
+        {
+            size_t IDi;
+            f.read((char*)&IDi, sizeof(IDi));
+
+            if(IDi == MPRANGE)
+            {
+                mvpMapPoints.push_back(nullptr);
+//                continue;
+            }
+            else
+            {
+                MapPoint* pMPi = mpMap->GetMpPtr(IDi);
+
+//                if(!pMPi)
+//                    pMPi = mpMap->GetErasedMpPtr(IDi);
+
+                if(!pMPi)
+                    pMPi = mpMap->ReserveMP(IDi);
+
+                if(!pMPi)
+                    cout << "ERROR: map point does not exist!!" << endl;
+
+                mvpMapPoints.push_back(pMPi);
+            }
+
+//            bool bLock;
+//            f.read((char*)&bLock, sizeof(bLock));
+//            mvbMapPointsLock.push_back(bLock);
+
+        }
+
+//        cout << "numMPs KF " << mId.first << "|" << mId.second << ": " << numMPs << endl;
+
+        u_int16_t numConKFs;
+        f.read((char*)&numConKFs, sizeof(numConKFs));
+        for(int idx=0;idx<numConKFs;++idx)
+        {
+            size_t IDi;
+            f.read((char*)&IDi, sizeof(IDi));
+
+            int w;
+            f.read((char*)&w, sizeof(w));
+
+            KeyFrame* pKFi = mpMap->GetKfPtr(IDi);
+
+//            if(!pKFi)
+//                pKFi = mpMap->GetErasedKfPtr(IDi);
+
+            if(!pKFi)
+                pKFi = mpMap->ReserveKF(IDi);
+
+            if(!pKFi)
+                cout << "ERROR Keyframe does not exist!!" << endl;
+
+            mConnectedKeyFrameWeights[pKFi] = w;
+        }
+
+//        cout << "numConKFs KF " << mId.first << "|" << mId.second << ": " << numConKFs << endl;
+
+        f.read((char*)&mbFirstConnection, sizeof(mbFirstConnection));
+
+        size_t IDpar;
+        f.read((char*)&IDpar, sizeof(IDpar));
+        if(IDpar == KFRANGE)
+        {
+            mpParent = nullptr;
+            if(this->mnId != 0)
+                cout << "WARNING: mpParent is nullptr" << endl;
+        }
+        else
+        {
+            KeyFrame* pKFi = mpMap->GetKfPtr(IDpar);
+
+//            if(!pKFi)
+//                pKFi = mpMap->GetErasedKfPtr(IDpar);
+
+            if(!pKFi)
+                pKFi = mpMap->ReserveKF(IDpar);
+
+            if(!pKFi)
+                cout << "ERROR: Keyframe does not exist!!" << endl;
+
+            mpParent = pKFi;
+        }
+
+//        cout << "IDpar.second KF " << mId.first << "|" << mId.second << ": " << IDpar.second << endl;
+
+        u_int16_t numChildren;
+        f.read((char*)&numChildren, sizeof(numChildren));
+        for(int idx=0;idx<numChildren;++idx)
+        {
+            size_t IDi;
+            f.read((char*)&IDi, sizeof(IDi));
+
+            KeyFrame* pKFi = mpMap->GetKfPtr(IDi);
+
+//            if(!pKFi)
+//                pKFi = mpMap->GetErasedKfPtr(IDi);
+
+            if(!pKFi)
+                pKFi = mpMap->ReserveKF(IDi);
+
+            if(!pKFi)
+                cout << "ERROR: Keyframe does not exist" << endl;
+
+            mspChildrens.insert(pKFi);
+        }
+
+//        cout << "numChildren KF " << mId.first << "|" << mId.second << ": " << numChildren << endl;
+
+        u_int16_t numLoopEdges;
+        f.read((char*)&numLoopEdges, sizeof(numLoopEdges));
+        for(int idx=0;idx<numLoopEdges;++idx)
+        {
+            size_t IDi;
+            f.read((char*)&IDi, sizeof(IDi));
+
+            KeyFrame* pKFi = mpMap->GetKfPtr(IDi);
+
+//            if(!pKFi)
+//                pKFi = mpMap->GetErasedKfPtr(IDi);
+
+            if(!pKFi)
+                pKFi = mpMap->ReserveKF(IDi);
+
+            if(!pKFi)
+                cout << "ERROR: Keyframe does not exist!!" << endl;
+
+            mspLoopEdges.insert(pKFi);
+        }
+
+//        cout << "numLoopEdges KF " << mId.first << "|" << mId.second << ": " << numLoopEdges << endl;
+
+        f.read((char*)&mbBad, sizeof(mbBad));
+
+        int finalvalue;
+        f.read((char*)&finalvalue, sizeof(finalvalue));
+//        if(this->mId.first < 10) cout << "finalvalue KF " << mId.first << "|" << mId.second << ": " << finalvalue << endl;
+    }
+
+    cv::Mat Rcw = Tcw.rowRange(0,3).colRange(0,3);
+    cv::Mat tcw = Tcw.rowRange(0,3).col(3);
+    cv::Mat Rwc = Rcw.t();
+    Ow = -Rwc*tcw;
+
+    Rwc.copyTo(Twc.rowRange(0,3).colRange(0,3));
+    Ow.copyTo(Twc.rowRange(0,3).col(3));
+    cv::Mat center = (cv::Mat_<float>(4,1) << mHalfBaseline, 0 , 0, 1);
+    Cw = Twc*center;
+
+    this->AssignFeaturesToGrid();
+    vector<cv::Mat> vCurrentDesc = Converter::toDescriptorVector(mDescriptors);
+    // Feature vector associate features with nodes in the 4th level (from leaves up)
+    // We assume the vocabulary tree has 6 levels, change the 4 otherwise
+    mpORBvocabulary->transform(vCurrentDesc,mBowVec,mFeatVec,4);
+    this->UpdateBestCovisibles();
+    mpKeyFrameDB->add(this);
+//    mbIsEmpty = false;
+}
+
+void KeyFrame::wmat(Mat& mat, ofstream &f)
+{
+    if(mat.type() == 0) //uint8_t
+    {
+        for(int r=0;r<mat.rows;++r)
+            for(int c=0;c<mat.cols;++c)
+            {
+                uint8_t val = mat.at<uint8_t>(r,c);
+                f.write((char*)&val, sizeof(val));
+            }
+    }
+    else if(mat.type() == 5) //float
+    {
+        for(int r=0;r<mat.rows;++r)
+            for(int c=0;c<mat.cols;++c)
+            {
+//                cout << "mat.at<float>(" << r << "," << c << "): " << mat.at<float>(r,c) << endl;
+                float val = mat.at<float>(r,c);
+                f.write((char*)&val, sizeof(val));
+            }
+    }
+    else if(mat.type() == 6) //double
+    {
+        cout << "WARNING: Mat Type is DOUBLE" << endl;
+        for(int r=0;r<mat.rows;++r)
+            for(int c=0;c<mat.cols;++c)
+            {
+                double val = mat.at<double>(r,c);
+                f.write((char*)&val, sizeof(val));
+            }
+    }
+    else
+        cout << "ERROR: Undefined Mat type!!" << endl;
+}
+
+void KeyFrame::rmat(Mat& mat, ifstream &f, int rows, int cols, int type)
+{
+    mat = cv::Mat(rows,cols,type);
+
+    if(mat.rows == 0 || mat.cols == 0)
+        cout << "WARNING: writing empty matrix" << endl;
+
+    if(mat.type() == 0) //uint8_t
+    {
+        for(int r=0;r<mat.rows;++r)
+            for(int c=0;c<mat.cols;++c)
+            {
+                uint8_t val;
+                f.read((char*)&val, sizeof(val));
+                mat.at<uint8_t>(r,c) = val;
+            }
+    }
+    else if(mat.type() == 5) //float
+    {
+        for(int r=0;r<mat.rows;++r)
+            for(int c=0;c<mat.cols;++c)
+            {
+                float val;
+                f.read((char*)&val, sizeof(val));
+                mat.at<float>(r,c) = val;
+            }
+    }
+    else if(mat.type() == 6) //double
+    {
+        cout << "WARNING: Mat Type is DOUBLE" << endl;
+        for(int r=0;r<mat.rows;++r)
+            for(int c=0;c<mat.cols;++c)
+            {
+                double val;
+                f.read((char*)&val, sizeof(val));
+                mat.at<double>(r,c) = val;
+            }
+    }
+    else
+        cout << "ERROR: Undefined Mat type!!" << endl;
+}
+
+void KeyFrame::AssignFeaturesToGrid() {
+  int nReserve = 0.5f*N/(mnGridCols*mnGridRows);
+  mGrid.resize(mnGridCols);
+  for(unsigned int i=0; i<mnGridCols;i++)
+  {
+    mGrid[i].resize(mnGridRows);
+    for (unsigned int j=0; j<mnGridRows;j++)
+      mGrid[i][j].reserve(nReserve);
+  }
+
+  for(int i=0;i<N;i++)
+  {
+    const cv::KeyPoint &kp = mvKeysUn[i];
+
+    int nGridPosX, nGridPosY;
+    if(PosInGrid(kp,nGridPosX,nGridPosY))
+      mGrid[nGridPosX][nGridPosY].push_back(i);
+  }
+}
+
+bool KeyFrame::PosInGrid(const KeyPoint &kp, int &posX, int &posY) {
+  posX = round((kp.pt.x-mnMinX)*mfGridElementWidthInv);
+      posY = round((kp.pt.y-mnMinY)*mfGridElementHeightInv);
+
+      //Keypoint's coordinates are undistorted, which could cause to go out of the image
+      if(posX<0 || posX>=mnGridCols || posY<0 || posY>=mnGridRows)
+          return false;
+
+  return true;
 }
 
 } //namespace ORB_SLAM

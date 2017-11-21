@@ -21,6 +21,7 @@
 #ifndef KEYFRAME_H
 #define KEYFRAME_H
 
+#include "Definitions.h"
 #include "MapPoint.h"
 #include "Thirdparty/DBoW2/DBoW2/BowVector.h"
 #include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
@@ -31,6 +32,8 @@
 
 #include <mutex>
 
+using namespace std;
+using namespace cv;
 
 namespace ORB_SLAM2
 {
@@ -44,6 +47,7 @@ class KeyFrame
 {
 public:
     KeyFrame(Frame &F, Map* pMap, KeyFrameDatabase* pKFDB);
+    KeyFrame(Map* pMap, const size_t id);
 
     // Pose functions
     void SetPose(const cv::Mat &Tcw);
@@ -116,6 +120,17 @@ public:
         return pKF1->mnId<pKF2->mnId;
     }
 
+    //state saving
+    void AssignFeaturesToGrid();
+    bool PosInGrid(const cv::KeyPoint &kp, int &posX, int &posY);
+    void SaveToFile(ofstream &f);//, set<idpair> &sKnownKFs, set<idpair> &sKnownMPs);
+    void LoadFromFile(ifstream &f);
+//    static void wp(idpair &p,ofstream &f){f.write((char*)&p.first, sizeof(p.first));f.write((char*)&p.second, sizeof(p.second));} //write idpair
+//    static void rp(idpair &p,ifstream &f){f.read((char*)&p.first, sizeof(p.first));f.read((char*)&p.second, sizeof(p.second));} //read idpair
+    //    static void wp(idpair p,ofstream &f){size_t val0 = p.first;size_t val1=p.second;f.write((char*)&val0, sizeof(val0));f.write((char*)&val1, sizeof(val1));} //write idpair
+    //    static void rp(idpair p,ifstream &f){size_t val0;size_t val1;f.read((char*)&val0, sizeof(val0));f.read((char*)&val1, sizeof(val1));} //read idpair
+    static void wmat(Mat &mat, ofstream &f);
+    static void rmat(Mat &mat, ifstream &f, int rows, int cols, int type);
 
     // The following variables are accesed from only 1 thread or never change (no mutex needed).
 public:
@@ -124,13 +139,13 @@ public:
     long unsigned int mnId;
     const long unsigned int mnFrameId;
 
-    const double mTimeStamp;
+    /*const*/ double mTimeStamp;
 
     // Grid (to speed up feature matching)
-    const int mnGridCols;
-    const int mnGridRows;
-    const float mfGridElementWidthInv;
-    const float mfGridElementHeightInv;
+    /*const*/ int mnGridCols;
+    /*const*/ int mnGridRows;
+    /*const*/ float mfGridElementWidthInv;
+    /*const*/ float mfGridElementHeightInv;
 
     // Variables used by the tracking
     long unsigned int mnTrackReferenceForFrame;
@@ -154,17 +169,17 @@ public:
     long unsigned int mnBAGlobalForKF;
 
     // Calibration parameters
-    const float fx, fy, cx, cy, invfx, invfy, mbf, mb, mThDepth;
+    /*const*/ float fx, fy, cx, cy, invfx, invfy, mbf, mb, mThDepth;
 
     // Number of KeyPoints
-    const int N;
+    /*const*/ int N;
 
     // KeyPoints, stereo coordinate and descriptors (all associated by an index)
-    const std::vector<cv::KeyPoint> mvKeys;
-    const std::vector<cv::KeyPoint> mvKeysUn;
-    const std::vector<float> mvuRight; // negative value for monocular points
-    const std::vector<float> mvDepth; // negative value for monocular points
-    const cv::Mat mDescriptors;
+    /*const*/ std::vector<cv::KeyPoint> mvKeys;
+    /*const*/ std::vector<cv::KeyPoint> mvKeysUn;
+    /*const*/ std::vector<float> mvuRight; // negative value for monocular points
+    /*const*/ std::vector<float> mvDepth; // negative value for monocular points
+    /*const*/ cv::Mat mDescriptors;
 
     //BoW
     DBoW2::BowVector mBowVec;
@@ -174,19 +189,19 @@ public:
     cv::Mat mTcp;
 
     // Scale
-    const int mnScaleLevels;
-    const float mfScaleFactor;
-    const float mfLogScaleFactor;
-    const std::vector<float> mvScaleFactors;
-    const std::vector<float> mvLevelSigma2;
-    const std::vector<float> mvInvLevelSigma2;
+    /*const*/ int mnScaleLevels;
+    /*const*/ float mfScaleFactor;
+    /*const*/ float mfLogScaleFactor;
+    /*const*/ std::vector<float> mvScaleFactors;
+    /*const*/ std::vector<float> mvLevelSigma2;
+    /*const*/ std::vector<float> mvInvLevelSigma2;
 
     // Image bounds and calibration
-    const int mnMinX;
-    const int mnMinY;
-    const int mnMaxX;
-    const int mnMaxY;
-    const cv::Mat mK;
+    /*const*/ int mnMinX;
+    /*const*/ int mnMinY;
+    /*const*/ int mnMaxX;
+    /*const*/ int mnMaxY;
+    /*const*/ cv::Mat mK;
 
 
     // The following variables need to be accessed trough a mutex to be thread safe.

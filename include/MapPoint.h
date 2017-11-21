@@ -21,12 +21,16 @@
 #ifndef MAPPOINT_H
 #define MAPPOINT_H
 
+#include "Definitions.h"
 #include"KeyFrame.h"
 #include"Frame.h"
 #include"Map.h"
 
 #include<opencv2/core/core.hpp>
 #include<mutex>
+
+using namespace std;
+using namespace cv;
 
 namespace ORB_SLAM2
 {
@@ -41,6 +45,7 @@ class MapPoint
 public:
     MapPoint(const cv::Mat &Pos, KeyFrame* pRefKF, Map* pMap);
     MapPoint(const cv::Mat &Pos,  Map* pMap, Frame* pFrame, const int &idxF);
+    MapPoint(Map* pMap, const size_t id);
 
     void SetWorldPos(const cv::Mat &Pos);
     cv::Mat GetWorldPos();
@@ -80,6 +85,10 @@ public:
     float GetMaxDistanceInvariance();
     int PredictScale(const float &currentDist, KeyFrame*pKF);
     int PredictScale(const float &currentDist, Frame* pF);
+
+    //state saving
+    void SaveToFile(ofstream &f);//, set<size_t> &sKnownKFs, set<size_t> &sKnownMPs);
+    void LoadFromFile(ifstream &f);
 
 public:
     long unsigned int mnId;

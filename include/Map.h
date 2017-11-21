@@ -21,13 +21,15 @@
 #ifndef MAP_H
 #define MAP_H
 
+#include "Definitions.h"
 #include "MapPoint.h"
 #include "KeyFrame.h"
 #include <set>
 
 #include <mutex>
 
-
+using namespace std;
+using namespace cv;
 
 namespace ORB_SLAM2
 {
@@ -52,6 +54,9 @@ public:
     std::vector<MapPoint*> GetAllMapPoints();
     std::vector<MapPoint*> GetReferenceMapPoints();
 
+    KeyFrame* GetKfPtr(size_t KfId);
+    MapPoint* GetMpPtr(size_t MpId);
+
     long unsigned int MapPointsInMap();
     long unsigned  KeyFramesInMap();
 
@@ -66,9 +71,18 @@ public:
     // This avoid that two points are created simultaneously in separate threads (id conflict)
     std::mutex mMutexPointCreation;
 
+    //state saving
+    void SaveToFile(ofstream &f);
+    void LoadFromFile(ifstream &f);
+    KeyFrame* ReserveKF(const size_t kfId);
+    MapPoint* ReserveMP(const size_t mpId);
+
 protected:
     std::set<MapPoint*> mspMapPoints;
     std::set<KeyFrame*> mspKeyFrames;
+
+    std::map<size_t, MapPoint*> mmpMapPoints;
+    std::map<size_t, KeyFrame*> mmpKeyFrames;
 
     std::vector<MapPoint*> mvpReferenceMapPoints;
 
