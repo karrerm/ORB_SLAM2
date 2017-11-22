@@ -272,6 +272,7 @@ void System::ActivateLocalizationMode()
 {
     unique_lock<mutex> lock(mMutexMode);
     mbActivateLocalizationMode = true;
+    mpTracker->mState = 3;
 }
 
 void System::DeactivateLocalizationMode()
