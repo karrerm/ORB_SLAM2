@@ -855,7 +855,7 @@ void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &
     {
         size_t val = KFRANGE;
         f.write((char*)&val, sizeof(val));
-        f.write((char*)&val, sizeof(val));
+//        f.write((char*)&val, sizeof(val));
 //        cout << "IDpar.second KF " << mId.first << "|" << mId.second << ": " << val << endl;
     }
 
