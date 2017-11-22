@@ -324,6 +324,19 @@ void System::PerformGlobalBA() {
   Optimizer::GlobalBundleAdjustemnt(mpMap, 50);
 }
 
+void System::SaveSystemState(const string &filename) {
+  ofstream f;
+  f.open(filename.c_str());
+  mpMap->SaveToFile(f);
+}
+
+void System::LoadSystemState(const string &filename) {
+  mpMap->clear();
+  ifstream f;
+  f.open(filename.c_str());
+  mpMap->LoadFromFile(f);
+}
+
 void System::SaveTrajectoryTUM(const string &filename)
 {
     cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;

@@ -97,6 +97,12 @@ public:
     // Perform a global bundle adjustment (i.e. before saving state)
     void PerformGlobalBA();
 
+    // Save the state
+    void SaveSystemState(const string &filename);
+
+    // Load the state
+    void LoadSystemState(const string &filename);
+
     // Save camera trajectory in the TUM RGB-D dataset format.
     // Only for stereo and RGB-D. This method does not work for monocular.
     // Call first Shutdown()
