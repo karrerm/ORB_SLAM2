@@ -265,14 +265,14 @@ void Map::SaveToFile(ofstream &f)
 void Map::LoadFromFile(ifstream &f)
 {
     cout << "--- Loading KFs ---" << endl;
-
     u_int16_t numKFs;
     f.read((char*)&numKFs, sizeof(numKFs));
-//    cout << "numKFs: " << numKFs << endl;
+    cout << "numKFs: " << numKFs << endl;
     for(int idx=0;idx<numKFs;++idx)
     {
         size_t IDi;
         f.read((char*)&IDi, sizeof(IDi));
+        cout << "IDi: " << IDi << endl;
 //        cout << "Constructing KF " << IDi.first << "|" << IDi.second << endl;
         KeyFrame* pKF = this->GetKfPtr(IDi);
         if(pKF)
@@ -282,7 +282,7 @@ void Map::LoadFromFile(ifstream &f)
 //                cout << COUTFATAL << "Trying to construct KF twice" << endl;
 //                KILLSYS
 //            }
-
+            cout << "attempts to load Keyframe from file" << endl;
             pKF->LoadFromFile(f);
         }
         else
@@ -303,6 +303,8 @@ void Map::LoadFromFile(ifstream &f)
             delete pKF;
             pKF = (new  KeyFrame(this, IDi));
             //pKF->reset(new KeyFrame(this, IDi));
+            cout << "attempts to load Keyframe from file" << endl;
+
             pKF->LoadFromFile(f);
 
             unique_lock<mutex> lock(mMutexMap);

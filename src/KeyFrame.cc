@@ -749,7 +749,11 @@ void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &
 //    cout << "mDescriptors.type: " << mDescriptors.type() << endl;
     for(int idx=0;idx<mDescriptors.rows;++idx)
         for(int idy=0;idy<mDescriptors.cols;++idy)
-            f.write((char*)&mDescriptors.at<uint8_t>(idx,idy), sizeof(u_int8_t));
+            f.write((char*)&mDescriptors.at<u_int8_t>(idx,idy), sizeof(u_int8_t));
+
+    if (mnId == 0) {
+      cv::imwrite("/home/karrerm/Documents/debug/descr_write.png", mDescriptors);
+    }
 
 //    cout << "numdescs KF " << mId.first << "|" << mId.second << ": " << numdescs << endl;
 
@@ -921,6 +925,8 @@ void KeyFrame::LoadFromFile(ifstream &f)
         f.read((char*)&mnRelocQuery, sizeof(mnRelocQuery));
         f.read((char*)&mnRelocWords, sizeof(mnRelocWords));
         f.read((char*)&mRelocScore, sizeof(mRelocScore));
+        f.read((char*)&mnBAGlobalForKF, sizeof(mnBAGlobalForKF));
+        cout << "LINE: "  << __LINE__ << endl;
 //        f.read((char*)&matsize, sizeof(matsize));
 //        if(matsize > 0)
 //            rmat(mTcwGBA,f,4,4,5);
@@ -939,7 +945,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
         f.read((char*)&invfx, sizeof(invfx));
         f.read((char*)&invfy, sizeof(invfy));
         f.read((char*)&N, sizeof(N));
-
 //        cout << "N KF " << mId.first << "|" << mId.second << ": " << N << endl;
 
         u_int16_t numkeys;
@@ -954,22 +959,25 @@ void KeyFrame::LoadFromFile(ifstream &f)
             f.read((char*)&kp.response, sizeof(kp.response));
             f.read((char*)&kp.size, sizeof(kp.size));
             mvKeysUn.push_back(kp);
+            cout << "kp.x: " << kp.pt.x << ", kp.y: " << kp.pt.y << ", kp.size: " << kp.size << endl;
         }
-
-//        cout << "numkeys KF " << mId.first << "|" << mId.second << ": " << numkeys << endl;
 
         u_int16_t numdescs;
         f.read((char*)&numdescs, sizeof(numdescs));
-        mDescriptors = cv::Mat(numdescs,32,0);
-        for(int idx=0;idx<numdescs;++idx)
+        cout << "numdescs KF " << mnId << ": " << numdescs << endl;
+        mDescriptors = cv::Mat(numdescs,32,CV_8UC1);
+        cout << "LINE: " << __LINE__ << endl;
+        for(int idx=0;idx<numdescs;++idx) {
             for(int idy=0;idy<32;++idy)
             {
-                uint8_t val;
+                u_int8_t val;
                 f.read((char*)&val, sizeof(val));
-                mDescriptors.at<uint8_t>(idx,idy) = val;
+                mDescriptors.at<u_int8_t>(idx,idy) = val;
             }
+        }
 
-//        cout << "numdescs KF " << mId.first << "|" << mId.second << ": " << numdescs << endl;
+        cv::imwrite("/home/karrerm/Documents/debug/descr_read.png", mDescriptors);
+
 
 //        f.read((char*)&matsize, sizeof(matsize));
 //        if(matsize > 0)
@@ -977,10 +985,13 @@ void KeyFrame::LoadFromFile(ifstream &f)
 //        if(matinit)
 //        if(mId.first != 0)
             rmat(mTcp,f,4,4,5);
+        cout << "mTcp:\n" << mTcp << endl;
 
         f.read((char*)&mnScaleLevels, sizeof(mnScaleLevels));
         f.read((char*)&mfScaleFactor, sizeof(mfScaleFactor));
         f.read((char*)&mfLogScaleFactor, sizeof(mfLogScaleFactor));
+        cout << "mnScaleLevels: " << mnScaleLevels << endl;
+        cout << "mfLogScaleFactor: " << mfLogScaleFactor << endl;
         for(int idx=0;idx<8;++idx)
         {
             float val;
@@ -1004,12 +1015,18 @@ void KeyFrame::LoadFromFile(ifstream &f)
         f.read((char*)&mnMinY, sizeof(mnMinY));
         f.read((char*)&mnMaxX, sizeof(mnMaxX));
         f.read((char*)&mnMaxY, sizeof(mnMaxY));
+        cout << "LINE: "  << __LINE__ << endl;
         rmat(mK,f,3,3,5);
+        cout << "LINE: "  << __LINE__ << endl;
+
 
 //        cout << "mnMaxY KF " << mId.first << "|" << mId.second << ": " << mnMaxY << endl;
+        cout << "LINE: "  << __LINE__ << endl;
 
         rmat(Tcw,f,4,4,5);
         rmat(Twc,f,4,4,5);
+        cout << "LINE: "  << __LINE__ << endl;
+
 //        rmat(Ow,f);
 //        f.read((char*)&mbPoseLock, sizeof(mbPoseLock));
 //        f.read((char*)&mbPoseChanged, sizeof(mbPoseChanged));
@@ -1017,6 +1034,7 @@ void KeyFrame::LoadFromFile(ifstream &f)
 
         u_int16_t numMPs;
         f.read((char*)&numMPs, sizeof(numMPs));
+        cout << "Num Mps: " << numMPs << endl;
         for(int idx=0;idx<numMPs;++idx)
         {
             size_t IDi;
@@ -1050,9 +1068,11 @@ void KeyFrame::LoadFromFile(ifstream &f)
         }
 
 //        cout << "numMPs KF " << mId.first << "|" << mId.second << ": " << numMPs << endl;
+        cout << "LINE: "  << __LINE__ << endl;
 
         u_int16_t numConKFs;
         f.read((char*)&numConKFs, sizeof(numConKFs));
+        cout << "NumConKFs: " << numConKFs << endl;
         for(int idx=0;idx<numConKFs;++idx)
         {
             size_t IDi;
@@ -1074,6 +1094,8 @@ void KeyFrame::LoadFromFile(ifstream &f)
 
             mConnectedKeyFrameWeights[pKFi] = w;
         }
+        cout << "LINE: "  << __LINE__ << endl;
+
 
 //        cout << "numConKFs KF " << mId.first << "|" << mId.second << ": " << numConKFs << endl;
 
@@ -1157,17 +1179,17 @@ void KeyFrame::LoadFromFile(ifstream &f)
         f.read((char*)&finalvalue, sizeof(finalvalue));
 //        if(this->mId.first < 10) cout << "finalvalue KF " << mId.first << "|" << mId.second << ": " << finalvalue << endl;
     }
-
+cout << "LINE: " << __LINE__ << endl;
     cv::Mat Rcw = Tcw.rowRange(0,3).colRange(0,3);
     cv::Mat tcw = Tcw.rowRange(0,3).col(3);
     cv::Mat Rwc = Rcw.t();
     Ow = -Rwc*tcw;
-
+cout << "LINE: " << __LINE__ << endl;
     Rwc.copyTo(Twc.rowRange(0,3).colRange(0,3));
     Ow.copyTo(Twc.rowRange(0,3).col(3));
     cv::Mat center = (cv::Mat_<float>(4,1) << mHalfBaseline, 0 , 0, 1);
     Cw = Twc*center;
-
+cout << "LINE: " << __LINE__ << endl;
     this->AssignFeaturesToGrid();
     vector<cv::Mat> vCurrentDesc = Converter::toDescriptorVector(mDescriptors);
     // Feature vector associate features with nodes in the 4th level (from leaves up)
@@ -1175,6 +1197,7 @@ void KeyFrame::LoadFromFile(ifstream &f)
     mpORBvocabulary->transform(vCurrentDesc,mBowVec,mFeatVec,4);
     this->UpdateBestCovisibles();
     mpKeyFrameDB->add(this);
+cout << "LINE: " << __LINE__ << endl;
 //    mbIsEmpty = false;
 }
 
@@ -1185,7 +1208,7 @@ void KeyFrame::wmat(Mat& mat, ofstream &f)
         for(int r=0;r<mat.rows;++r)
             for(int c=0;c<mat.cols;++c)
             {
-                uint8_t val = mat.at<uint8_t>(r,c);
+                u_int8_t val = mat.at<u_int8_t>(r,c);
                 f.write((char*)&val, sizeof(val));
             }
     }
@@ -1225,9 +1248,9 @@ void KeyFrame::rmat(Mat& mat, ifstream &f, int rows, int cols, int type)
         for(int r=0;r<mat.rows;++r)
             for(int c=0;c<mat.cols;++c)
             {
-                uint8_t val;
+                u_int8_t val;
                 f.read((char*)&val, sizeof(val));
-                mat.at<uint8_t>(r,c) = val;
+                mat.at<u_int8_t>(r,c) = val;
             }
     }
     else if(mat.type() == 5) //float
