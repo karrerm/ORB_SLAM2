@@ -507,7 +507,7 @@ void MapPoint::SaveToFile(ofstream &f)//, set<size_t> &sKnownKFs, set<size_t> &s
     {
         size_t val = KFRANGE;
         f.write((char*)&val, sizeof(val));
-        f.write((char*)&val, sizeof(val));
+//        f.write((char*)&val, sizeof(val));
     }
 
 
