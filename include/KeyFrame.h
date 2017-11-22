@@ -47,7 +47,8 @@ class KeyFrame
 {
 public:
     KeyFrame(Frame &F, Map* pMap, KeyFrameDatabase* pKFDB);
-    KeyFrame(Map* pMap, const size_t id);
+    KeyFrame(Map* pMap, const size_t id, ORBVocabulary* pVoc = NULL,
+             KeyFrameDatabase* pKFDB = NULL);
 
     // Pose functions
     void SetPose(const cv::Mat &Tcw);

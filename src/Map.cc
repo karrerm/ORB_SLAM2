@@ -565,6 +565,8 @@ void Map::LoadFromFile(ifstream &f, ORBVocabulary* pVoc,
 
     u_int16_t numOrigins;
     f.read((char*)&numOrigins, sizeof(numOrigins));
+    cout << "numOrigins: " << numOrigins << endl;
+
     for(int idx=0;idx<numOrigins;++idx)
     {
         size_t IDi;

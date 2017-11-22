@@ -24,6 +24,7 @@
 #include "Definitions.h"
 #include "MapPoint.h"
 #include "KeyFrame.h"
+#include "KeyFrameDatabase.h"
 #include <set>
 
 #include <mutex>
@@ -36,6 +37,7 @@ namespace ORB_SLAM2
 
 class MapPoint;
 class KeyFrame;
+class KeyFrameDatabase;
 
 class Map
 {
@@ -73,7 +75,8 @@ public:
 
     //state saving
     void SaveToFile(ofstream &f);
-    void LoadFromFile(ifstream &f);
+    void LoadFromFile(ifstream &f, ORBVocabulary* pVoc,
+                      KeyFrameDatabase* pKFDbase);
     KeyFrame* ReserveKF(const size_t kfId);
     MapPoint* ReserveMP(const size_t mpId);
 

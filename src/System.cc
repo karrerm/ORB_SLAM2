@@ -334,7 +334,7 @@ void System::LoadSystemState(const string &filename) {
   mpMap->clear();
   ifstream f;
   f.open(filename.c_str());
-  mpMap->LoadFromFile(f);
+  mpMap->LoadFromFile(f, mpVocabulary, mpKeyFrameDatabase);
 }
 
 void System::SaveTrajectoryTUM(const string &filename)

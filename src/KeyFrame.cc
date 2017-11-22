@@ -56,12 +56,14 @@ KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB):
     SetPose(F.mTcw);    
 }
 
-KeyFrame::KeyFrame(Map *pMap, const size_t id) :
+KeyFrame::KeyFrame(Map *pMap, const size_t id, ORBVocabulary* pVoc,
+                   KeyFrameDatabase* pKFDB) :
   mnGridCols(FRAME_GRID_COLS), mnGridRows(FRAME_GRID_ROWS),
   mnTrackReferenceForFrame(0), mnFuseTargetForKF(0), mnBALocalForKF(0), mnBAFixedForKF(0),
   mnLoopQuery(0), mnLoopWords(0), mnRelocQuery(0), mnRelocWords(0), mnBAGlobalForKF(0),
   mbFirstConnection(true), mpParent(NULL), mbNotErase(false),
-  mbToBeErased(false), mbBad(false), mpMap(pMap), mnId(id), mnFrameId(id)
+  mbToBeErased(false), mbBad(false), mpMap(pMap), mnId(id), mnFrameId(id),
+  mpORBvocabulary(pVoc), mpKeyFrameDB(pKFDB)
 {
 
 
@@ -961,7 +963,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
             f.read((char*)&kp.response, sizeof(kp.response));
             f.read((char*)&kp.size, sizeof(kp.size));
             mvKeysUn.push_back(kp);
-            cout << "kp.x: " << kp.pt.x << ", kp.y: " << kp.pt.y << ", kp.size: " << kp.size << endl;
         }
 
         u_int16_t numdescs;
@@ -977,8 +978,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
                 mDescriptors.at<u_int8_t>(idx,idy) = val;
             }
         }
-
-        cv::imwrite("/home/karrerm/Documents/debug/descr_read.png", mDescriptors);
 
 
 //        f.read((char*)&matsize, sizeof(matsize));
@@ -1017,17 +1016,13 @@ void KeyFrame::LoadFromFile(ifstream &f)
         f.read((char*)&mnMinY, sizeof(mnMinY));
         f.read((char*)&mnMaxX, sizeof(mnMaxX));
         f.read((char*)&mnMaxY, sizeof(mnMaxY));
-        cout << "LINE: "  << __LINE__ << endl;
         rmat(mK,f,3,3,5);
-        cout << "LINE: "  << __LINE__ << endl;
 
 
 //        cout << "mnMaxY KF " << mId.first << "|" << mId.second << ": " << mnMaxY << endl;
-        cout << "LINE: "  << __LINE__ << endl;
 
         rmat(Tcw,f,4,4,5);
         rmat(Twc,f,4,4,5);
-        cout << "LINE: "  << __LINE__ << endl;
 
 //        rmat(Ow,f);
 //        f.read((char*)&mbPoseLock, sizeof(mbPoseLock));
@@ -1193,12 +1188,20 @@ cout << "LINE: " << __LINE__ << endl;
     Cw = Twc*center;
 cout << "LINE: " << __LINE__ << endl;
     this->AssignFeaturesToGrid();
+cout << "LINE: " << __LINE__ << endl;
+cout << "descr.size: " << mDescriptors.rows << "|" << mDescriptors.cols << endl;
     vector<cv::Mat> vCurrentDesc = Converter::toDescriptorVector(mDescriptors);
+    cout << "vCurrentDesc.size(): " << vCurrentDesc.size() << endl;
     // Feature vector associate features with nodes in the 4th level (from leaves up)
     // We assume the vocabulary tree has 6 levels, change the 4 otherwise
-    mpORBvocabulary->transform(vCurrentDesc,mBowVec,mFeatVec,4);
-    this->UpdateBestCovisibles();
-    mpKeyFrameDB->add(this);
+if (mpORBvocabulary == NULL) {
+  cout << "the pointer to the ORB vocabulary is empty!!!" << endl;
+}
+//    mpORBvocabulary->transform(vCurrentDesc,mBowVec,mFeatVec,4);
+cout << "LINE: " << __LINE__ << endl;
+//    this->UpdateBestCovisibles();
+cout << "LINE: " << __LINE__ << endl;
+//    mpKeyFrameDB->add(this);
 cout << "LINE: " << __LINE__ << endl;
 //    mbIsEmpty = false;
 }
@@ -1281,7 +1284,9 @@ void KeyFrame::rmat(Mat& mat, ifstream &f, int rows, int cols, int type)
 }
 
 void KeyFrame::AssignFeaturesToGrid() {
+  cout << "gridCols: " << mnGridCols << ", gridRows: " << mnGridRows << endl;
   int nReserve = 0.5f*N/(mnGridCols*mnGridRows);
+  cout << "N: " << N << endl;
   mGrid.resize(mnGridCols);
   for(unsigned int i=0; i<mnGridCols;i++)
   {
@@ -1289,7 +1294,7 @@ void KeyFrame::AssignFeaturesToGrid() {
     for (unsigned int j=0; j<mnGridRows;j++)
       mGrid[i][j].reserve(nReserve);
   }
-
+  cout << "LINE: " << __LINE__ << endl;
   for(int i=0;i<N;i++)
   {
     const cv::KeyPoint &kp = mvKeysUn[i];
@@ -1298,6 +1303,7 @@ void KeyFrame::AssignFeaturesToGrid() {
     if(PosInGrid(kp,nGridPosX,nGridPosY))
       mGrid[nGridPosX][nGridPosY].push_back(i);
   }
+  cout << "LINE: " << __LINE__ << endl;
 }
 
 bool KeyFrame::PosInGrid(const KeyPoint &kp, int &posX, int &posY) {
@@ -1307,7 +1313,6 @@ bool KeyFrame::PosInGrid(const KeyPoint &kp, int &posX, int &posY) {
       //Keypoint's coordinates are undistorted, which could cause to go out of the image
       if(posX<0 || posX>=mnGridCols || posY<0 || posY>=mnGridRows)
           return false;
-
   return true;
 }
 
