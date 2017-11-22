@@ -25,6 +25,7 @@
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
+#include "Optimizer.h"
 
 namespace ORB_SLAM2
 {
@@ -317,6 +318,10 @@ void System::Shutdown()
 
     if(mpViewer)
         pangolin::BindToContext("ORB-SLAM2: Map Viewer");
+}
+
+void System::PerformGlobalBA() {
+  Optimizer::GlobalBundleAdjustemnt(mpMap, 50);
 }
 
 void System::SaveTrajectoryTUM(const string &filename)

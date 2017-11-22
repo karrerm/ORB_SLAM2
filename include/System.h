@@ -94,6 +94,9 @@ public:
     // This function must be called before saving the trajectory.
     void Shutdown();
 
+    // Perform a global bundle adjustment (i.e. before saving state)
+    void PerformGlobalBA();
+
     // Save camera trajectory in the TUM RGB-D dataset format.
     // Only for stereo and RGB-D. This method does not work for monocular.
     // Call first Shutdown()
