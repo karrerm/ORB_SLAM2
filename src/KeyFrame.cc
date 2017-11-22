@@ -811,7 +811,7 @@ void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &
         {
             size_t val = MPRANGE;
             f.write((char*)&val, sizeof(val));
-            f.write((char*)&val, sizeof(val));
+//            f.write((char*)&val, sizeof(val));
         }
 
 //        bool bLock = mvbMapPointsLock[idx];
