@@ -1084,7 +1084,7 @@ void KeyFrame::LoadFromFile(ifstream &f)
 //                pKFi = mpMap->GetErasedKfPtr(IDi);
 
             if(!pKFi)
-                pKFi = mpMap->ReserveKF(IDi);
+                pKFi = mpMap->ReserveKF(IDi, mpORBvocabulary, mpKeyFrameDB);
 
             if(!pKFi)
                 cout << "ERROR Keyframe does not exist!!" << endl;
@@ -1114,7 +1114,7 @@ void KeyFrame::LoadFromFile(ifstream &f)
 //                pKFi = mpMap->GetErasedKfPtr(IDpar);
 
             if(!pKFi)
-                pKFi = mpMap->ReserveKF(IDpar);
+                pKFi = mpMap->ReserveKF(IDpar, mpORBvocabulary, mpKeyFrameDB);
 
             if(!pKFi)
                 cout << "ERROR: Keyframe does not exist!!" << endl;
@@ -1137,7 +1137,7 @@ void KeyFrame::LoadFromFile(ifstream &f)
 //                pKFi = mpMap->GetErasedKfPtr(IDi);
 
             if(!pKFi)
-                pKFi = mpMap->ReserveKF(IDi);
+                pKFi = mpMap->ReserveKF(IDi, mpORBvocabulary, mpKeyFrameDB);
 
             if(!pKFi)
                 cout << "ERROR: Keyframe does not exist" << endl;
@@ -1160,7 +1160,7 @@ void KeyFrame::LoadFromFile(ifstream &f)
 //                pKFi = mpMap->GetErasedKfPtr(IDi);
 
             if(!pKFi)
-                pKFi = mpMap->ReserveKF(IDi);
+                pKFi = mpMap->ReserveKF(IDi, mpORBvocabulary, mpKeyFrameDB);
 
             if(!pKFi)
                 cout << "ERROR: Keyframe does not exist!!" << endl;
@@ -1197,13 +1197,13 @@ cout << "descr.size: " << mDescriptors.rows << "|" << mDescriptors.cols << endl;
 if (mpORBvocabulary == NULL) {
   cout << "the pointer to the ORB vocabulary is empty!!!" << endl;
 }
-//    mpORBvocabulary->transform(vCurrentDesc,mBowVec,mFeatVec,4);
+    mpORBvocabulary->transform(vCurrentDesc,mBowVec,mFeatVec,4);
 cout << "LINE: " << __LINE__ << endl;
-//    this->UpdateBestCovisibles();
+    this->UpdateBestCovisibles();
 cout << "LINE: " << __LINE__ << endl;
-//    mpKeyFrameDB->add(this);
+    mpKeyFrameDB->add(this);
 cout << "LINE: " << __LINE__ << endl;
-//    mbIsEmpty = false;
+  //  mbIsEmpty = false;
 }
 
 void KeyFrame::wmat(Mat& mat, ofstream &f)

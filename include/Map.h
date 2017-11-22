@@ -76,8 +76,8 @@ public:
     //state saving
     void SaveToFile(ofstream &f);
     void LoadFromFile(ifstream &f, ORBVocabulary* pVoc,
-                      KeyFrameDatabase* pKFDbase);
-    KeyFrame* ReserveKF(const size_t kfId);
+                      KeyFrameDatabase* pKFDB);
+    KeyFrame* ReserveKF(const size_t kfId, ORBVocabulary* pVoc, KeyFrameDatabase* pKFDB);
     MapPoint* ReserveMP(const size_t mpId);
 
 protected:

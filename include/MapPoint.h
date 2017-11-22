@@ -88,7 +88,8 @@ public:
 
     //state saving
     void SaveToFile(ofstream &f);//, set<size_t> &sKnownKFs, set<size_t> &sKnownMPs);
-    void LoadFromFile(ifstream &f);
+    void LoadFromFile(ifstream &f, ORBVocabulary* pVoc = NULL,
+                      KeyFrameDatabase* pKFDB = NULL);
 
 public:
     long unsigned int mnId;

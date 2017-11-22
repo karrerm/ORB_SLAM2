@@ -321,6 +321,7 @@ void System::Shutdown()
 }
 
 void System::PerformGlobalBA() {
+  std::cout << "NumKFs in Map: " << mpMap->GetAllKeyFrames().size() << std::endl;
   Optimizer::GlobalBundleAdjustemnt(mpMap, 50);
 }
 

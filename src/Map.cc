@@ -422,8 +422,8 @@ void Map::LoadFromFile(ifstream &f, ORBVocabulary* pVoc,
         size_t IDi;
         f.read((char*)&IDi, sizeof(IDi));
 
-        if(IDi == 750)
-            cout << "WTF?????" << endl;
+//        if(IDi == 750)
+//            cout << "WTF?????" << endl;
 
         MapPoint* pMP = this->GetMpPtr(IDi);
         if(pMP)
@@ -600,9 +600,11 @@ void Map::LoadFromFile(ifstream &f, ORBVocabulary* pVoc,
 //    pKFshow->ShowMyValues();
 }
 
-KeyFrame* Map::ReserveKF(const size_t idp)
+KeyFrame* Map::ReserveKF(const size_t idp,
+                         ORBVocabulary* pVoc,
+                         KeyFrameDatabase* pKFDB)
 {
-    KeyFrame* pKF{new KeyFrame(this, idp)};
+    KeyFrame* pKF{new KeyFrame(this, idp, pVoc, pKFDB)};
 
     {
         unique_lock<mutex> lock(mMutexMap);

@@ -537,7 +537,8 @@ void MapPoint::SaveToFile(ofstream &f)//, set<size_t> &sKnownKFs, set<size_t> &s
 //    if(this->mId.first < 10) cout << "finalvalue MP " << mId.first << "|" << mId.second << ": " << finalvalue << endl;
 }
 
-void MapPoint::LoadFromFile(ifstream &f)
+void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
+                            KeyFrameDatabase* pKFDB)
 {
 //    if(this->mId.first < 10)
 //        cout << "Loading MP " << mId.first << "|" << mId.second << endl;
@@ -599,7 +600,7 @@ void MapPoint::LoadFromFile(ifstream &f)
 //                pKFi = mpMap->GetErasedKfPtr(IDi);
 
             if(!pKFi)
-                pKFi = mpMap->ReserveKF(IDi);
+                pKFi = mpMap->ReserveKF(IDi, pVoc, pKFDB);
 
             if(!pKFi)
                 cout << "ERROR: Keyframe does not exist!!" << endl;
@@ -629,7 +630,7 @@ void MapPoint::LoadFromFile(ifstream &f)
 //                    pKFi = mpMap->GetErasedKfPtr(IDi);
 
                 if(!pKFi)
-                    pKFi = mpMap->ReserveKF(IDi);
+                    pKFi = mpMap->ReserveKF(IDi, pVoc, pKFDB);
 
                 if(!pKFi)
                     cout << "ERROR: Keyframe does not exist!!" << endl;
