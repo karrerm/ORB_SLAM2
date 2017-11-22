@@ -244,6 +244,7 @@ void Map::SaveToFile(ofstream &f)
     cout << "--- Saving Map Vals ---" << endl;
 
     u_int16_t numOrigins = mvpKeyFrameOrigins.size();
+    cout << "numOrigins: " << numOrigins << endl;
     f.write((char*)&numOrigins, sizeof(numOrigins));
     for(int idx=0;idx<mvpKeyFrameOrigins.size();++idx)
     {
@@ -262,7 +263,8 @@ void Map::SaveToFile(ofstream &f)
     cout << "finalvalue map: " << finalvalue << endl;
 }
 
-void Map::LoadFromFile(ifstream &f)
+void Map::LoadFromFile(ifstream &f, ORBVocabulary* pVoc,
+                       KeyFrameDatabase* pKFDbase)
 {
     cout << "--- Loading KFs ---" << endl;
     u_int16_t numKFs;
@@ -301,7 +303,7 @@ void Map::LoadFromFile(ifstream &f)
 //            ccptr pCC = *(mspCC.begin());
 
             delete pKF;
-            pKF = (new  KeyFrame(this, IDi));
+            pKF = (new  KeyFrame(this, IDi, pVoc, pKFDbase));
             //pKF->reset(new KeyFrame(this, IDi));
             cout << "attempts to load Keyframe from file" << endl;
 
