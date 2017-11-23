@@ -806,7 +806,12 @@ void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &
         MapPoint* pMPi = mvpMapPoints[idx];
         if(pMPi)
         {
+          if (!pMPi->isBad()) {
             f.write((char*)&pMPi->mnId, sizeof(pMPi->mnId));
+          } else {
+            size_t val = MPRANGE;
+            f.write((char*)&val, sizeof(val));
+          }
         }
         else
         {
@@ -1178,6 +1183,10 @@ void KeyFrame::LoadFromFile(ifstream &f)
         f.read((char*)&finalvalue, sizeof(finalvalue));
 //        if(this->mId.first < 10) cout << "finalvalue KF " << mId.first << "|" << mId.second << ": " << finalvalue << endl;
     }
+    mvuRight.clear();
+    mvuRight.resize(mvKeysUn.size(), -1.0f);
+    mvDepth.clear();
+    mvDepth.resize(mvKeysUn.size(), -1.0f);
     cv::Mat Rcw = Tcw.rowRange(0,3).colRange(0,3);
     cv::Mat tcw = Tcw.rowRange(0,3).col(3);
     cv::Mat Rwc = Rcw.t();
