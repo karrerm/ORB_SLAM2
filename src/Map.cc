@@ -160,6 +160,12 @@ void Map::SaveToFile(ofstream &f)
         f.write((char*)&pKFi->mnId, sizeof(pKFi->mnId));
         pKFi->SaveToFile(f);//,sKnownKFs,sKnownMPs);
 
+        set<KeyFrame*> connKFs = pKFi->GetConnectedKeyFrames();
+        for (auto itr = connKFs.begin(); itr != connKFs.end(); ++itr) {
+            if (mspKeyFrames.find((*itr)) == mspKeyFrames.end()) {
+              std::cout << "ERROR: Keyframe not in Map but in connected keyframes!!" << std::endl;
+            }
+        }
 //        sWrittenKFs.insert(pKFi->mId);
 
 //        if(pKFi->mId.first == 0 || pKFi->mId.first == 3)
@@ -248,9 +254,6 @@ void Map::LoadFromFile(ifstream &f, ORBVocabulary* pVoc,
     {
         size_t IDi;
         f.read((char*)&IDi, sizeof(IDi));
-        if (IDi == 107) {
-          std::cout << "Should construct KF107 from MAp" << std::endl;
-        }
 //        cout << "Constructing KF " << IDi.first << "|" << IDi.second << endl;
         KeyFrame* pKF = this->GetKfPtr(IDi);
         if(pKF)

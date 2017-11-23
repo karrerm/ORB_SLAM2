@@ -771,7 +771,6 @@ void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &
 //    cout << "mTcp:" << endl;
 //    cout << mTcp << endl;
 //    cout << "mTcp.at<float>(1,1): " << mTcp.at<float>(1,1) << endl;
-    cout << "Write Tcp: \n" << mTcp << endl;
         wmat(mTcp,f);
 
     f.write((char*)&mnScaleLevels, sizeof(mnScaleLevels));
