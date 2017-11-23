@@ -58,6 +58,7 @@ public:
 
     KeyFrame* GetKfPtr(size_t KfId);
     MapPoint* GetMpPtr(size_t MpId);
+    void UpdateAllConnections();
 
     long unsigned int MapPointsInMap();
     long unsigned  KeyFramesInMap();

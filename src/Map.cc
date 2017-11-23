@@ -125,6 +125,14 @@ MapPoint* Map::GetMpPtr(size_t MpId)
     else return nullptr;
 }
 
+void Map::UpdateAllConnections() {
+  unique_lock<mutex> lock(mMutexMap);
+  for (auto itr = mspKeyFrames.begin(); itr != mspKeyFrames.end(); ++itr) {
+    KeyFrame* kfPtr = (*itr);
+    kfPtr->UpdateConnections();
+  }
+}
+
 long unsigned int Map::GetMaxKFid()
 {
     unique_lock<mutex> lock(mMutexMap);
@@ -149,7 +157,7 @@ void Map::clear()
 void Map::SaveToFile(ofstream &f)
 {
     cout << "--- Saving KFs ---" << endl;
-
+    UpdateAllConnections();
     u_int16_t numKFs = mspKeyFrames.size();
     f.write((char*)&numKFs, sizeof(numKFs));
     cout << "numKFs: " << numKFs << endl;
