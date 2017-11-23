@@ -272,7 +272,6 @@ void System::ActivateLocalizationMode()
 {
     unique_lock<mutex> lock(mMutexMode);
     mbActivateLocalizationMode = true;
-    mpTracker->mState = 3;
 }
 
 void System::DeactivateLocalizationMode()
@@ -337,6 +336,7 @@ void System::LoadSystemState(const string &filename) {
   ifstream f;
   f.open(filename.c_str());
   mpMap->LoadFromFile(f, mpVocabulary, mpKeyFrameDatabase);
+  mpTracker->mState = ORB_SLAM2::Tracking::eTrackingState::LOST;
 }
 
 void System::SaveTrajectoryTUM(const string &filename)
