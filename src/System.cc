@@ -344,8 +344,6 @@ void System::LoadSystemState(const string &filename) {
   f.open(filename.c_str());
   mpMap->LoadFromFile(f, mpVocabulary, mpKeyFrameDatabase);
   mpTracker->mState = ORB_SLAM2::Tracking::eTrackingState::LOST;
-  Shutdown();
-  PerformGlobalBA();
 }
 
 void System::SaveTrajectoryTUM(const string &filename)

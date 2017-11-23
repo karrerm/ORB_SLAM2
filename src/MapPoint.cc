@@ -359,6 +359,12 @@ void MapPoint::UpdateNormalAndDepth()
     for(map<KeyFrame*,size_t>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
     {
         KeyFrame* pKF = mit->first;
+        if (!pKF) {
+          continue;
+        }
+        if (pKF->isBad()) {
+          continue;
+        }
         cv::Mat Owi = pKF->GetCameraCenter();
         cv::Mat normali = mWorldPos - Owi;
         normal = normal + normali/cv::norm(normali);
