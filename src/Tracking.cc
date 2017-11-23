@@ -1376,6 +1376,7 @@ std::cout << "Number of candidateKFs: " << vpCandidateKFs.size() << std::endl;
         else
         {
             int nmatches = matcher.SearchByBoW(pKF,mCurrentFrame,vvpMapPointMatches[i]);
+            std::cout << "num BoW matches: " << nmatches << std::endl;
             if(nmatches<15)
             {
                 vbDiscarded[i] = true;
@@ -1439,7 +1440,7 @@ std::cout << "Number of candidateKFs: " << vpCandidateKFs.size() << std::endl;
                 }
 
                 int nGood = Optimizer::PoseOptimization(&mCurrentFrame);
-
+std::cout << "nGood: " << nGood << std::endl;
                 if(nGood<10)
                     continue;
 
