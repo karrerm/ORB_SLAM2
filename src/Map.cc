@@ -168,12 +168,6 @@ void Map::SaveToFile(ofstream &f)
         f.write((char*)&pKFi->mnId, sizeof(pKFi->mnId));
         pKFi->SaveToFile(f);//,sKnownKFs,sKnownMPs);
 
-        set<KeyFrame*> connKFs = pKFi->GetConnectedKeyFrames();
-        for (auto itr = connKFs.begin(); itr != connKFs.end(); ++itr) {
-            if (mspKeyFrames.find((*itr)) == mspKeyFrames.end()) {
-              std::cout << "ERROR: Keyframe not in Map but in connected keyframe. isBad: " << (*itr)->isBad() << std::endl;
-            }
-        }
 //        sWrittenKFs.insert(pKFi->mId);
 
 //        if(pKFi->mId.first == 0 || pKFi->mId.first == 3)

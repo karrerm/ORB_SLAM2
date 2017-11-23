@@ -820,8 +820,18 @@ void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &
     }
 
 //    cout << "numMPs KF " << mId.first << "|" << mId.second << ": " << numMPs << endl;
-
-    u_int16_t numConKFs = mConnectedKeyFrameWeights.size();
+    u_int16_t numConKFs = 0;
+    for(std::map<KeyFrame*,int>::iterator mit = mConnectedKeyFrameWeights.begin();mit!=mConnectedKeyFrameWeights.end();++mit)
+    {
+        KeyFrame* pKFi = mit->first;
+        int w = mit->second;
+        if(!pKFi) {
+           cout << "NULLPTR in mConnectedKeyFrameWeights" << endl;
+        }
+        if (!pKFi->isBad()) {
+          ++numConKFs;
+        }
+    }
     f.write((char*)&numConKFs, sizeof(numConKFs));
     for(std::map<KeyFrame*,int>::iterator mit = mConnectedKeyFrameWeights.begin();mit!=mConnectedKeyFrameWeights.end();++mit)
     {
@@ -833,8 +843,10 @@ void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &
 //            cout << COUTFATAL<< "NULLPTR in mConnectedKeyFrameWeights" << endl;
 //            KILLSYS
         }
-        f.write((char*)&pKFi->mnId, sizeof(pKFi->mnId));
-        f.write((char*)&w, sizeof(w));
+        if (!pKFi->isBad()) {
+          f.write((char*)&pKFi->mnId, sizeof(pKFi->mnId));
+          f.write((char*)&w, sizeof(w));
+        }
 
 //        if(!(sKnownKFs.count(pKFi->mId)))
 //            cout << COUTERROR << "KF " << mId.first << "|" << mId.second << ": ConKF " << pKFi->mId.first << "|" << pKFi->mId.second << " not known" << endl;
