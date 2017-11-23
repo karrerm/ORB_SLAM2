@@ -930,7 +930,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
         f.read((char*)&mnRelocWords, sizeof(mnRelocWords));
         f.read((char*)&mRelocScore, sizeof(mRelocScore));
         f.read((char*)&mnBAGlobalForKF, sizeof(mnBAGlobalForKF));
-        cout << "LINE: "  << __LINE__ << endl;
 //        f.read((char*)&matsize, sizeof(matsize));
 //        if(matsize > 0)
 //            rmat(mTcwGBA,f,4,4,5);
@@ -967,9 +966,7 @@ void KeyFrame::LoadFromFile(ifstream &f)
 
         u_int16_t numdescs;
         f.read((char*)&numdescs, sizeof(numdescs));
-        cout << "numdescs KF " << mnId << ": " << numdescs << endl;
         mDescriptors = cv::Mat(numdescs,32,CV_8UC1);
-        cout << "LINE: " << __LINE__ << endl;
         for(int idx=0;idx<numdescs;++idx) {
             for(int idy=0;idy<32;++idy)
             {
@@ -986,13 +983,11 @@ void KeyFrame::LoadFromFile(ifstream &f)
 //        if(matinit)
 //        if(mId.first != 0)
             rmat(mTcp,f,4,4,5);
-        cout << "mTcp:\n" << mTcp << endl;
 
         f.read((char*)&mnScaleLevels, sizeof(mnScaleLevels));
         f.read((char*)&mfScaleFactor, sizeof(mfScaleFactor));
         f.read((char*)&mfLogScaleFactor, sizeof(mfLogScaleFactor));
-        cout << "mnScaleLevels: " << mnScaleLevels << endl;
-        cout << "mfLogScaleFactor: " << mfLogScaleFactor << endl;
+
         for(int idx=0;idx<8;++idx)
         {
             float val;
@@ -1031,7 +1026,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
 
         u_int16_t numMPs;
         f.read((char*)&numMPs, sizeof(numMPs));
-        cout << "Num Mps: " << numMPs << endl;
         for(int idx=0;idx<numMPs;++idx)
         {
             size_t IDi;
@@ -1065,11 +1059,9 @@ void KeyFrame::LoadFromFile(ifstream &f)
         }
 
 //        cout << "numMPs KF " << mId.first << "|" << mId.second << ": " << numMPs << endl;
-        cout << "LINE: "  << __LINE__ << endl;
 
         u_int16_t numConKFs;
         f.read((char*)&numConKFs, sizeof(numConKFs));
-        cout << "NumConKFs: " << numConKFs << endl;
         for(int idx=0;idx<numConKFs;++idx)
         {
             size_t IDi;
@@ -1091,7 +1083,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
 
             mConnectedKeyFrameWeights[pKFi] = w;
         }
-        cout << "LINE: "  << __LINE__ << endl;
 
 
 //        cout << "numConKFs KF " << mId.first << "|" << mId.second << ": " << numConKFs << endl;
@@ -1176,33 +1167,24 @@ void KeyFrame::LoadFromFile(ifstream &f)
         f.read((char*)&finalvalue, sizeof(finalvalue));
 //        if(this->mId.first < 10) cout << "finalvalue KF " << mId.first << "|" << mId.second << ": " << finalvalue << endl;
     }
-cout << "LINE: " << __LINE__ << endl;
     cv::Mat Rcw = Tcw.rowRange(0,3).colRange(0,3);
     cv::Mat tcw = Tcw.rowRange(0,3).col(3);
     cv::Mat Rwc = Rcw.t();
     Ow = -Rwc*tcw;
-cout << "LINE: " << __LINE__ << endl;
     Rwc.copyTo(Twc.rowRange(0,3).colRange(0,3));
     Ow.copyTo(Twc.rowRange(0,3).col(3));
     cv::Mat center = (cv::Mat_<float>(4,1) << mHalfBaseline, 0 , 0, 1);
     Cw = Twc*center;
-cout << "LINE: " << __LINE__ << endl;
     this->AssignFeaturesToGrid();
-cout << "LINE: " << __LINE__ << endl;
-cout << "descr.size: " << mDescriptors.rows << "|" << mDescriptors.cols << endl;
     vector<cv::Mat> vCurrentDesc = Converter::toDescriptorVector(mDescriptors);
-    cout << "vCurrentDesc.size(): " << vCurrentDesc.size() << endl;
     // Feature vector associate features with nodes in the 4th level (from leaves up)
     // We assume the vocabulary tree has 6 levels, change the 4 otherwise
 if (mpORBvocabulary == NULL) {
   cout << "the pointer to the ORB vocabulary is empty!!!" << endl;
 }
     mpORBvocabulary->transform(vCurrentDesc,mBowVec,mFeatVec,4);
-cout << "LINE: " << __LINE__ << endl;
     this->UpdateBestCovisibles();
-cout << "LINE: " << __LINE__ << endl;
     mpKeyFrameDB->add(this);
-cout << "LINE: " << __LINE__ << endl;
   //  mbIsEmpty = false;
 }
 
@@ -1284,9 +1266,7 @@ void KeyFrame::rmat(Mat& mat, ifstream &f, int rows, int cols, int type)
 }
 
 void KeyFrame::AssignFeaturesToGrid() {
-  cout << "gridCols: " << mnGridCols << ", gridRows: " << mnGridRows << endl;
   int nReserve = 0.5f*N/(mnGridCols*mnGridRows);
-  cout << "N: " << N << endl;
   mGrid.resize(mnGridCols);
   for(unsigned int i=0; i<mnGridCols;i++)
   {
@@ -1294,7 +1274,6 @@ void KeyFrame::AssignFeaturesToGrid() {
     for (unsigned int j=0; j<mnGridRows;j++)
       mGrid[i][j].reserve(nReserve);
   }
-  cout << "LINE: " << __LINE__ << endl;
   for(int i=0;i<N;i++)
   {
     const cv::KeyPoint &kp = mvKeysUn[i];
@@ -1303,7 +1282,6 @@ void KeyFrame::AssignFeaturesToGrid() {
     if(PosInGrid(kp,nGridPosX,nGridPosY))
       mGrid[nGridPosX][nGridPosY].push_back(i);
   }
-  cout << "LINE: " << __LINE__ << endl;
 }
 
 bool KeyFrame::PosInGrid(const KeyPoint &kp, int &posX, int &posY) {

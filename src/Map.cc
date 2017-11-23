@@ -148,37 +148,11 @@ void Map::clear()
 
 void Map::SaveToFile(ofstream &f)
 {
-    set<size_t> sKnownKFs,sKnownMPs;
-
-    for(set<KeyFrame*>::iterator sit = mspKeyFrames.begin();sit != mspKeyFrames.end();++sit)
-    {
-        KeyFrame* pKFi = *sit;
-        sKnownKFs.insert(pKFi->mnId);
-    }
-
-//    for(map<size_t,KeyFrame*>::iterator mit = mmpErasedKeyFrames.begin();mit != mmpErasedKeyFrames.end();++mit)
-//    {
-//        kfptr pKFi = mit->second;
-//        sKnownKFs.insert(pKFi->mId);
-//    }
-
-    for(set<MapPoint*>::iterator sit = mspMapPoints.begin();sit != mspMapPoints.end();++sit)
-    {
-        MapPoint* pMPi = *sit;
-        sKnownMPs.insert(pMPi->mnId);
-    }
-
-//    for(map<size_t, MapPoint*>::iterator mit = mmpErasedMapPoints.begin();mit != mmpErasedMapPoints.end();++mit)
-//    {
-//        MapPoint* pMPi = mit->second;
-//        sKnownMPs.insert(pMPi->mnId);
-//    }
-
     cout << "--- Saving KFs ---" << endl;
 
     u_int16_t numKFs = mspKeyFrames.size();
     f.write((char*)&numKFs, sizeof(numKFs));
-//    cout << "numKFs: " << numKFs << endl;
+    cout << "numKFs: " << numKFs << endl;
     for(set<KeyFrame*>::iterator sit = mspKeyFrames.begin();sit != mspKeyFrames.end();++sit)
     {
         KeyFrame* pKFi = *sit;
@@ -274,7 +248,9 @@ void Map::LoadFromFile(ifstream &f, ORBVocabulary* pVoc,
     {
         size_t IDi;
         f.read((char*)&IDi, sizeof(IDi));
-        cout << "IDi: " << IDi << endl;
+        if (IDi == 107) {
+          std::cout << "Should construct KF107 from MAp" << std::endl;
+        }
 //        cout << "Constructing KF " << IDi.first << "|" << IDi.second << endl;
         KeyFrame* pKF = this->GetKfPtr(IDi);
         if(pKF)
@@ -284,7 +260,6 @@ void Map::LoadFromFile(ifstream &f, ORBVocabulary* pVoc,
 //                cout << COUTFATAL << "Trying to construct KF twice" << endl;
 //                KILLSYS
 //            }
-            cout << "attempts to load Keyframe from file" << endl;
             pKF->LoadFromFile(f);
         }
         else
@@ -305,7 +280,6 @@ void Map::LoadFromFile(ifstream &f, ORBVocabulary* pVoc,
             delete pKF;
             pKF = (new  KeyFrame(this, IDi, pVoc, pKFDbase));
             //pKF->reset(new KeyFrame(this, IDi));
-            cout << "attempts to load Keyframe from file" << endl;
 
             pKF->LoadFromFile(f);
 
@@ -606,6 +580,7 @@ KeyFrame* Map::ReserveKF(const size_t idp,
 {
     KeyFrame* pKF{new KeyFrame(this, idp, pVoc, pKFDB)};
 
+    std::cout << "Reserves a KF: " << idp << std::endl;
     {
         unique_lock<mutex> lock(mMutexMap);
         mspKeyFrames.insert(pKF);

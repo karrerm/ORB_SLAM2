@@ -599,8 +599,9 @@ void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
 //            if(!pKFi)
 //                pKFi = mpMap->GetErasedKfPtr(IDi);
 
-            if(!pKFi)
+            if(!pKFi) {
                 pKFi = mpMap->ReserveKF(IDi, pVoc, pKFDB);
+            }
 
             if(!pKFi)
                 cout << "ERROR: Keyframe does not exist!!" << endl;
@@ -629,8 +630,9 @@ void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
 //                if(!pKFi)
 //                    pKFi = mpMap->GetErasedKfPtr(IDi);
 
-                if(!pKFi)
-                    pKFi = mpMap->ReserveKF(IDi, pVoc, pKFDB);
+                if(!pKFi) {
+                  pKFi = mpMap->ReserveKF(IDi, pVoc, pKFDB);
+                }
 
                 if(!pKFi)
                     cout << "ERROR: Keyframe does not exist!!" << endl;
@@ -642,6 +644,9 @@ void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
         f.read((char*)&mnVisible, sizeof(mnVisible));
         f.read((char*)&mnFound, sizeof(mnFound));
         f.read((char*)&mbBad, sizeof(mbBad));
+        if (mbBad) {
+          std::cout << "Bad Map point was loaded (Id: " << mnId << ")" << std::endl;
+        }
 
         {
             size_t IDi;

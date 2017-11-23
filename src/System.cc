@@ -321,7 +321,14 @@ void System::Shutdown()
 }
 
 void System::PerformGlobalBA() {
-  std::cout << "NumKFs in Map: " << mpMap->GetAllKeyFrames().size() << std::endl;
+  vector<KeyFrame*> KFs = mpMap->GetAllKeyFrames();
+  int counter = 0;
+  for (size_t i = 0; i < KFs.size(); ++i) {
+    if (KFs[i] != NULL) {
+      ++counter;
+    }
+  }
+  std::cout << "NumKFs in Map: " << counter << std::endl;
   Optimizer::GlobalBundleAdjustemnt(mpMap, 50);
 }
 
@@ -337,6 +344,8 @@ void System::LoadSystemState(const string &filename) {
   f.open(filename.c_str());
   mpMap->LoadFromFile(f, mpVocabulary, mpKeyFrameDatabase);
   mpTracker->mState = ORB_SLAM2::Tracking::eTrackingState::LOST;
+  Shutdown();
+  PerformGlobalBA();
 }
 
 void System::SaveTrajectoryTUM(const string &filename)
