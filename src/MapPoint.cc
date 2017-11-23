@@ -501,17 +501,17 @@ void MapPoint::SaveToFile(ofstream &f)//, set<size_t> &sKnownKFs, set<size_t> &s
 
     if(mpRefKF)
     {
+      if (!mpRefKF->isBad()) {
         f.write((char*)&mpRefKF->mnId, sizeof(mpRefKF->mnId));
+      } else {
+          size_t val = KFRANGE;
+          f.write((char*)&val, sizeof(val));
+      }
+    } else {
+      size_t val = KFRANGE;
+      f.write((char*)&val, sizeof(val));
+    }
 
-//        if(!(sKnownKFs.count(mpRefKF->mId)))
-//            cout << COUTERROR << "MP " << mId.first << "|" << mId.second << ": mpRefKF " << mpRefKF->mId.first << "|" << mpRefKF->mId.second << " not known" << endl;
-    }
-    else
-    {
-        size_t val = KFRANGE;
-        f.write((char*)&val, sizeof(val));
-//        f.write((char*)&val, sizeof(val));
-    }
 
 
     f.write((char*)&mnVisible, sizeof(mnVisible));
@@ -608,6 +608,7 @@ void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
 //                pKFi = mpMap->GetErasedKfPtr(IDi);
 
             if(!pKFi) {
+                std::cout << "ERROR: Reserves a keyframe!!" << std::endl;
                 pKFi = mpMap->ReserveKF(IDi, pVoc, pKFDB);
             }
 
@@ -639,6 +640,7 @@ void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
 //                    pKFi = mpMap->GetErasedKfPtr(IDi);
 
                 if(!pKFi) {
+                  std::cout << "Reserve Keyframe for reference!!" << std::endl;
                   pKFi = mpMap->ReserveKF(IDi, pVoc, pKFDB);
                 }
 
