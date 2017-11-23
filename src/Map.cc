@@ -171,7 +171,7 @@ void Map::SaveToFile(ofstream &f)
         set<KeyFrame*> connKFs = pKFi->GetConnectedKeyFrames();
         for (auto itr = connKFs.begin(); itr != connKFs.end(); ++itr) {
             if (mspKeyFrames.find((*itr)) == mspKeyFrames.end()) {
-              std::cout << "ERROR: Keyframe not in Map but in connected keyframes!!" << std::endl;
+              std::cout << "ERROR: Keyframe not in Map but in connected keyframe. isBad: " << (*itr)->isBad() << std::endl;
             }
         }
 //        sWrittenKFs.insert(pKFi->mId);
