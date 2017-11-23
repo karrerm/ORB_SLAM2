@@ -223,7 +223,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
         cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular." << endl;
         exit(-1);
     }
-
+std::cout << "Gets into track monocular" << std::endl;
     // Check mode change
     {
         unique_lock<mutex> lock(mMutexMode);
@@ -258,7 +258,9 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
     }
     }
 
+    std::cout << "Wants to track monocular image.." << std::endl;
     cv::Mat Tcw = mpTracker->GrabImageMonocular(im,timestamp);
+    std::cout << "Tracking: \n" << Tcw << std::endl;
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
