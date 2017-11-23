@@ -326,6 +326,7 @@ void Tracking::Track()
 
             if(mState==LOST)
             {
+              std::cout << "Attempts Relocalization" << std::endl;
                 bOK = Relocalization();
             }
             else
@@ -1346,7 +1347,7 @@ bool Tracking::Relocalization()
     // Relocalization is performed when tracking is lost
     // Track Lost: Query KeyFrame Database for keyframe candidates for relocalisation
     vector<KeyFrame*> vpCandidateKFs = mpKeyFrameDB->DetectRelocalizationCandidates(&mCurrentFrame);
-
+std::cout << "Number of candidateKFs: " << vpCandidateKFs.size() << std::endl;
     if(vpCandidateKFs.empty())
         return false;
 
