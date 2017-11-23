@@ -473,9 +473,12 @@ void MapPoint::SaveToFile(ofstream &f)//, set<size_t> &sKnownKFs, set<size_t> &s
     {
         KeyFrame* pKFi = mit->first;
         size_t id = mit->second;
-
-        f.write((char*)&pKFi->mnId, sizeof(pKFi->mnId));
-        f.write((char*)&id, sizeof(id));
+        bool isBad = pKFi->isBad();
+        f.write((char*)&isBad, sizeof(isBad));
+        if (!isBad) {
+          f.write((char*)&pKFi->mnId, sizeof(pKFi->mnId));
+          f.write((char*)&id, sizeof(id));
+        }
 
 //        bool bLock;
 //        if(mObservationsLock.count(pKFi))
@@ -590,6 +593,11 @@ void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
             size_t id;
             bool bLock;
 
+            bool isBad;
+            f.read((char*)&isBad, sizeof(isBad));
+            if (isBad) {
+              continue;
+            }
             f.read((char*)&IDi, sizeof(IDi));
             f.read((char*)&id, sizeof(id));
 //            f.read((char*)&bLock, sizeof(bLock));
