@@ -282,6 +282,12 @@ void System::DeactivateLocalizationMode()
     mbDeactivateLocalizationMode = true;
 }
 
+void System::CreateVisualization(const std::string& strSettingsFile) {
+  mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
+  mptViewer = new thread(&Viewer::Run, mpViewer);
+  mpTracker->SetViewer(mpViewer);
+}
+
 bool System::MapChanged()
 {
     static int n=0;
