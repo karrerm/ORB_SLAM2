@@ -406,8 +406,10 @@ void Tracking::Track()
             // mbVO true means that there are few matches to MapPoints in the map. We cannot retrieve
             // a local map and therefore we do not perform TrackLocalMap(). Once the system relocalizes
             // the camera we will use the local map again.
-            if(bOK && !mbVO)
-                bOK = TrackLocalMap();
+            if(bOK && !mbVO) {
+              std::cout << "Track Local Map..." << std::endl;
+              bOK = TrackLocalMap();
+            }
         }
 
         if(bOK)
@@ -480,8 +482,11 @@ void Tracking::Track()
             }
         }
 
-        if(!mCurrentFrame.mpReferenceKF)
+        if(!mCurrentFrame.mpReferenceKF) {
             mCurrentFrame.mpReferenceKF = mpReferenceKF;
+            bool isNull = (mpReferenceKF == NULL);
+            std::cout << "Reference KF is NULL: " << isNull << std::endl;
+        }
 
         mLastFrame = Frame(mCurrentFrame);
     }
@@ -489,7 +494,8 @@ void Tracking::Track()
     // Store frame pose information to retrieve the complete camera trajectory afterwards.
     if(!mCurrentFrame.mTcw.empty())
     {
-        cv::Mat Tcr = mCurrentFrame.mTcw*mCurrentFrame.mpReferenceKF->GetPoseInverse();
+        //std::cout << "mTcw: \n" << mCurrentFrame.mTcw << std::endl;
+        cv::Mat Tcr = mCurrentFrame.mTcw;//*mCurrentFrame.mpReferenceKF->GetPoseInverse();
         mlRelativeFramePoses.push_back(Tcr);
         mlpReferences.push_back(mpReferenceKF);
         mlFrameTimes.push_back(mCurrentFrame.mTimeStamp);
@@ -804,8 +810,9 @@ void Tracking::UpdateLastFrame()
     // Update pose according to reference keyframe
     KeyFrame* pRef = mLastFrame.mpReferenceKF;
     cv::Mat Tlr = mlRelativeFramePoses.back();
+cv::Mat Tref = Mat::eye(4, 4, CV_32F);
 
-    mLastFrame.SetPose(Tlr*pRef->GetPose());
+    mLastFrame.SetPose(Tlr*Tref);//pRef->GetPose());
 
     if(mnLastKeyFrameId==mLastFrame.mnId || mSensor==System::MONOCULAR || !mbOnlyTracking)
         return;
@@ -873,6 +880,8 @@ bool Tracking::TrackWithMotionModel()
     // Create "visual odometry" points if in Localization Mode
     UpdateLastFrame();
 
+    std::cout << "Wants to set the curren frame pose" << std::endl;
+      std::cout << "Last frame.mTcw:\n" << mLastFrame.mTcw << std::endl;
     mCurrentFrame.SetPose(mVelocity*mLastFrame.mTcw);
 
     fill(mCurrentFrame.mvpMapPoints.begin(),mCurrentFrame.mvpMapPoints.end(),static_cast<MapPoint*>(NULL));
@@ -932,9 +941,10 @@ bool Tracking::TrackLocalMap()
 {
     // We have an estimation of the camera pose and some map points tracked in the frame.
     // We retrieve the local map and try to find matches to points in the local map.
-
+std::cout << "UpdateLocal Map" << std::endl;
     UpdateLocalMap();
 
+    std::cout << "SearchLocalPoints()" << std::endl;
     SearchLocalPoints();
 
     // Optimize Pose
@@ -1377,6 +1387,7 @@ std::cout << "Number of candidateKFs: " << vpCandidateKFs.size() << std::endl;
         {
             int nmatches = matcher.SearchByBoW(pKF,mCurrentFrame,vvpMapPointMatches[i]);
             std::cout << "num BoW matches: " << nmatches << std::endl;
+            std::cout << "Uses correct version" << std::endl;
             if(nmatches<15)
             {
                 vbDiscarded[i] = true;
@@ -1452,10 +1463,11 @@ std::cout << "nGood: " << nGood << std::endl;
                 if(nGood<50)
                 {
                     int nadditional =matcher2.SearchByProjection(mCurrentFrame,vpCandidateKFs[i],sFound,10,100);
-
+                    std::cout << "nadditional: " << nadditional << std::endl;
                     if(nadditional+nGood>=50)
                     {
                         nGood = Optimizer::PoseOptimization(&mCurrentFrame);
+                        std::cout << "nGood2: " << nGood << std::endl;
 
                         // If many inliers but still not enough, search by projection again in a narrower window
                         // the camera has been already optimized with many points
@@ -1484,6 +1496,7 @@ std::cout << "nGood: " << nGood << std::endl;
                 // If the pose is supported by enough inliers stop ransacs and continue
                 if(nGood>=50)
                 {
+                  std::cout << "FOUND a match!!" << std::endl;
                     bMatch = true;
                     break;
                 }
