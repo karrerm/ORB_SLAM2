@@ -676,22 +676,15 @@ float KeyFrame::ComputeSceneMedianDepth(const int q)
     return vDepths[(vDepths.size()-1)/q];
 }
 
-void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &sKnownMPs)
+void KeyFrame::SaveToFile(ofstream &f)
 {
-//    if(this->mId.first < 10) cout << "Saving KF " << mId.first << "|" << mId.second << endl;
-
     unique_lock<mutex> lock1(mMutexFeatures,defer_lock);
     unique_lock<mutex> lock2(mMutexConnections,defer_lock);
     unique_lock<mutex> lock3(mMutexPose,defer_lock);
 
     lock(lock1,lock2,lock3);
 
-//    int matsize = 0;
-//    bool matinit = false;
-
-//    f.write((char*)&mdServerTimestamp, sizeof(mdServerTimestamp));
     f.write((char*)&mTimeStamp, sizeof(mTimeStamp));
-//    f.write((char*)&mdInsertStamp, sizeof(mdInsertStamp));
     f.write((char*)&mnFrameId, sizeof(mnFrameId));
     f.write((char*)&mnId, sizeof(mnId));
     f.write((char*)&mnGridCols, sizeof(mnGridCols));
@@ -703,25 +696,12 @@ void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &
     f.write((char*)&mnBALocalForKF, sizeof(mnBALocalForKF));
     f.write((char*)&mnBAFixedForKF, sizeof(mnBAFixedForKF));
     f.write((char*)&mnLoopQuery, sizeof(mnLoopQuery));
-//    f.write((char*)&mnMatchQuery, sizeof(mnMatchQuery));
     f.write((char*)&mnLoopWords, sizeof(mnLoopWords));
     f.write((char*)&mLoopScore, sizeof(mLoopScore));
     f.write((char*)&mnRelocQuery, sizeof(mnRelocQuery));
     f.write((char*)&mnRelocWords, sizeof(mnRelocWords));
     f.write((char*)&mRelocScore, sizeof(mRelocScore));
-//    matsize = mTcwGBA.rows;
-//    f.write((char*)&matsize, sizeof(matsize));
-//    if(matsize > 0)
-//        wmat(mTcwGBA,f);
-//    matsize = mTcwBefGBA.rows;
-//    f.write((char*)&matsize, sizeof(matsize));
-//    if(matsize > 0)
-//        wmat(mTcwBefGBA,f);
     f.write((char*)&mnBAGlobalForKF, sizeof(mnBAGlobalForKF));
-//    f.write((char*)&mbLoopCorrected, sizeof(mbLoopCorrected));
-//    wp(mCorrected_MM,f);
-//    f.write((char*)&mfDistToCurKF, sizeof(mfDistToCurKF));
-
     f.write((char*)&fx, sizeof(fx));
     f.write((char*)&fy, sizeof(fy));
     f.write((char*)&cx, sizeof(cx));
@@ -729,8 +709,6 @@ void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &
     f.write((char*)&invfx, sizeof(invfx));
     f.write((char*)&invfy, sizeof(invfy));
     f.write((char*)&N, sizeof(N));
-
-//    cout << "N KF " << mId.first << "|" << mId.second << ": " << N << endl;
 
     u_int16_t numkeys = mvKeysUn.size();
     f.write((char*)&numkeys, sizeof(numkeys));
@@ -745,59 +723,35 @@ void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &
         f.write((char*)&kp.size, sizeof(kp.size));
     }
 
-//    cout << "numkeys KF " << mId.first << "|" << mId.second << ": " << numkeys << endl;
-
     u_int16_t numdescs = mDescriptors.rows;
     f.write((char*)&numdescs, sizeof(numdescs));
-//    cout << "mDescriptors.type: " << mDescriptors.type() << endl;
-    for(int idx=0;idx<mDescriptors.rows;++idx)
-        for(int idy=0;idy<mDescriptors.cols;++idy)
+    for(int idx=0;idx<mDescriptors.rows;++idx) {
+        for(int idy=0;idy<mDescriptors.cols;++idy) {
             f.write((char*)&mDescriptors.at<u_int8_t>(idx,idy), sizeof(u_int8_t));
-
-    if (mnId == 0) {
-      cv::imwrite("/home/karrerm/Documents/debug/descr_write.png", mDescriptors);
+        }
     }
-
-//    cout << "numdescs KF " << mId.first << "|" << mId.second << ": " << numdescs << endl;
-
-//    matsize = mTcp.rows;
-//    f.write((char*)&matsize, sizeof(matsize));
-//    if(matsize > 0)
-//    matinit = !(!mTcp);mTcp.
-//    f.write((char*)&matinit, sizeof(matinit));
-//    cout << "mTcp initialized: " << matinit << endl;
-//    if(matinit)
-//    if(mId.first != 0)
-//    cout << "mTcp:" << endl;
-//    cout << mTcp << endl;
-//    cout << "mTcp.at<float>(1,1): " << mTcp.at<float>(1,1) << endl;
-        wmat(mTcp,f);
+    wmat(mTcp,f);
 
     f.write((char*)&mnScaleLevels, sizeof(mnScaleLevels));
     f.write((char*)&mfScaleFactor, sizeof(mfScaleFactor));
     f.write((char*)&mfLogScaleFactor, sizeof(mfLogScaleFactor));
-    for(int idx=0;idx<mvScaleFactors.size();++idx)
+    for(int idx=0;idx<mvScaleFactors.size();++idx) {
         f.write((char*)&mvScaleFactors[idx], sizeof(float));
-    for(int idx=0;idx<mvLevelSigma2.size();++idx)
+    }
+    for(int idx=0;idx<mvLevelSigma2.size();++idx) {
         f.write((char*)&mvLevelSigma2[idx], sizeof(float));
-    for(int idx=0;idx<mvInvLevelSigma2.size();++idx)
+    }
+    for(int idx=0;idx<mvInvLevelSigma2.size();++idx) {
         f.write((char*)&mvInvLevelSigma2[idx], sizeof(float));
+    }
 
     f.write((char*)&mnMinX, sizeof(mnMinX));
     f.write((char*)&mnMinY, sizeof(mnMinY));
     f.write((char*)&mnMaxX, sizeof(mnMaxX));
     f.write((char*)&mnMaxY, sizeof(mnMaxY));
     wmat(mK,f);
-
-//    cout << "mnMaxY KF " << mId.first << "|" << mId.second << ": " << mnMaxY << endl;
-
     wmat(Tcw,f);
     wmat(Twc,f);
-//    wmat(Ow,f);
-//    f.write((char*)&mbPoseLock, sizeof(mbPoseLock));
-//    f.write((char*)&mbPoseChanged, sizeof(mbPoseChanged));
-//    f.write((char*)&mdPoseTime, sizeof(mdPoseTime));
-//    wmat(Cw,f);
 
     u_int16_t numMPs = mvpMapPoints.size();
     f.write((char*)&numMPs, sizeof(numMPs));
@@ -817,14 +771,9 @@ void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &
         {
             size_t val = MPRANGE;
             f.write((char*)&val, sizeof(val));
-//            f.write((char*)&val, sizeof(val));
         }
-
-//        bool bLock = mvbMapPointsLock[idx];
-//        f.write((char*)&bLock, sizeof(bLock));
     }
 
-//    cout << "numMPs KF " << mId.first << "|" << mId.second << ": " << numMPs << endl;
     u_int16_t numConKFs = 0;
     for(std::map<KeyFrame*,int>::iterator mit = mConnectedKeyFrameWeights.begin();mit!=mConnectedKeyFrameWeights.end();++mit)
     {
@@ -845,36 +794,23 @@ void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &
         if(!pKFi)
         {
            cout << "NULLPTR in mConnectedKeyFrameWeights" << endl;
-//            cout << COUTFATAL<< "NULLPTR in mConnectedKeyFrameWeights" << endl;
-//            KILLSYS
         }
         if (!pKFi->isBad()) {
           f.write((char*)&pKFi->mnId, sizeof(pKFi->mnId));
           f.write((char*)&w, sizeof(w));
         }
-
-//        if(!(sKnownKFs.count(pKFi->mId)))
-//            cout << COUTERROR << "KF " << mId.first << "|" << mId.second << ": ConKF " << pKFi->mId.first << "|" << pKFi->mId.second << " not known" << endl;
     }
-
-//    cout << "numConKFs KF " << mId.first << "|" << mId.second << ": " << numConKFs << endl;
 
     f.write((char*)&mbFirstConnection, sizeof(mbFirstConnection));
 
     if(mpParent)
     {
         f.write((char*)&mpParent->mnId, sizeof(mpParent->mnId));
-//        cout << "IDpar.second KF " << mId.first << "|" << mId.second << ": " << mpParent->mId.second << endl;
-
-//        if(!(sKnownKFs.count(mpParent->mId)))
-//            cout << COUTERROR << "KF " << mId.first << "|" << mId.second << ": mpParent " << mpParent->mId.first << "|" << mpParent->mId.second << " not known" << endl;
     }
     else
     {
         size_t val = KFRANGE;
         f.write((char*)&val, sizeof(val));
-//        f.write((char*)&val, sizeof(val));
-//        cout << "IDpar.second KF " << mId.first << "|" << mId.second << ": " << val << endl;
     }
 
     u_int16_t numChildren = mspChildrens.size();
@@ -883,12 +819,7 @@ void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &
     {
         KeyFrame* pKFi = *sit;
         f.write((char*)&pKFi->mnId, sizeof(pKFi->mnId));
-
-//        if(!(sKnownKFs.count(pKFi->mId)))
-//            cout << COUTERROR << "KF " << mId.first << "|" << mId.second << ": Child KF " << pKFi->mId.first << "|" << pKFi->mId.second << " not known" << endl;
     }
-
-//    cout << "numChildren KF " << mId.first << "|" << mId.second << ": " << numChildren << endl;
 
     u_int16_t numLoopEdges = mspLoopEdges.size();
     f.write((char*)&numLoopEdges, sizeof(numLoopEdges));
@@ -896,38 +827,24 @@ void KeyFrame::SaveToFile(ofstream &f) //, set<idpair> &sKnownKFs, set<idpair> &
     {
         KeyFrame* pKFi = *sit;
         f.write((char*)&pKFi->mnId, sizeof(pKFi->mnId));
-
-//        if(!(sKnownKFs.count(pKFi->mId)))
-//            cout << COUTERROR << "KF " << mId.first << "|" << mId.second << ": Loop KF " << pKFi->mId.first << "|" << pKFi->mId.second << " not known" << endl;
     }
-
-//    cout << "numLoopEdges KF " << mId.first << "|" << mId.second << ": " << numLoopEdges << endl;
 
     f.write((char*)&mbBad, sizeof(mbBad));
 
     int finalvalue = rand();
     f.write((char*)&finalvalue, sizeof(finalvalue));
-//    if(this->mId.first < 10) cout << "finalvalue KF " << mId.first << "|" << mId.second << ": " << finalvalue << endl;
 }
 
 void KeyFrame::LoadFromFile(ifstream &f)
 {
-//    if(this->mId.first < 10) cout << "Loading KF " << mId.first << "|" << mId.second << endl;
-
     {
-//        unique_lock<mutex> lockOut(mMutexOut,defer_lock);
         unique_lock<mutex> lock1(mMutexFeatures,defer_lock);
         unique_lock<mutex> lock2(mMutexConnections,defer_lock);
         unique_lock<mutex> lock3(mMutexPose,defer_lock);
 
         lock(lock1,lock2,lock3);
 
-//        int matsize = 0;
-//        bool matinit = false;
-
-//        f.read((char*)&mdServerTimestamp, sizeof(mdServerTimestamp));
         f.read((char*)&mTimeStamp, sizeof(mTimeStamp));
-//        f.read((char*)&mdInsertStamp, sizeof(mdInsertStamp));
         f.read((char*)&mnFrameId, sizeof(mnFrameId));
         f.read((char*)&mnId, sizeof(mnId));
         f.read((char*)&mnGridCols, sizeof(mnGridCols));
@@ -946,17 +863,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
         f.read((char*)&mnRelocWords, sizeof(mnRelocWords));
         f.read((char*)&mRelocScore, sizeof(mRelocScore));
         f.read((char*)&mnBAGlobalForKF, sizeof(mnBAGlobalForKF));
-//        f.read((char*)&matsize, sizeof(matsize));
-//        if(matsize > 0)
-//            rmat(mTcwGBA,f,4,4,5);
-//        f.read((char*)&matsize, sizeof(matsize));
-//        if(matsize > 0)
-//            rmat(mTcwBefGBA,f,4,4,5);
-//        f.read((char*)&mnBAGlobalForKF, sizeof(mnBAGlobalForKF));
-//        f.read((char*)&mbLoopCorrected, sizeof(mbLoopCorrected));
-//        rp(mCorrected_MM,f);
-//        f.read((char*)&mfDistToCurKF, sizeof(mfDistToCurKF));
-
         f.read((char*)&fx, sizeof(fx));
         f.read((char*)&fy, sizeof(fy));
         f.read((char*)&cx, sizeof(cx));
@@ -964,7 +870,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
         f.read((char*)&invfx, sizeof(invfx));
         f.read((char*)&invfy, sizeof(invfy));
         f.read((char*)&N, sizeof(N));
-//        cout << "N KF " << mId.first << "|" << mId.second << ": " << N << endl;
 
         u_int16_t numkeys;
         f.read((char*)&numkeys, sizeof(numkeys));
@@ -992,13 +897,7 @@ void KeyFrame::LoadFromFile(ifstream &f)
             }
         }
 
-
-//        f.read((char*)&matsize, sizeof(matsize));
-//        if(matsize > 0)
-//        f.read((char*)&matinit, sizeof(matinit));
-//        if(matinit)
-//        if(mId.first != 0)
-            rmat(mTcp,f,4,4,5);
+        rmat(mTcp,f,4,4,5);
 
         f.read((char*)&mnScaleLevels, sizeof(mnScaleLevels));
         f.read((char*)&mfScaleFactor, sizeof(mfScaleFactor));
@@ -1030,15 +929,10 @@ void KeyFrame::LoadFromFile(ifstream &f)
         rmat(mK,f,3,3,5);
 
 
-//        cout << "mnMaxY KF " << mId.first << "|" << mId.second << ": " << mnMaxY << endl;
 
         rmat(Tcw,f,4,4,5);
         rmat(Twc,f,4,4,5);
 
-//        rmat(Ow,f);
-//        f.read((char*)&mbPoseLock, sizeof(mbPoseLock));
-//        f.read((char*)&mbPoseChanged, sizeof(mbPoseChanged));
-//        f.read((char*)&mdPoseTime, sizeof(mdPoseTime));
 
         u_int16_t numMPs;
         f.read((char*)&numMPs, sizeof(numMPs));
@@ -1056,9 +950,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
             {
                 MapPoint* pMPi = mpMap->GetMpPtr(IDi);
 
-//                if(!pMPi)
-//                    pMPi = mpMap->GetErasedMpPtr(IDi);
-
                 if(!pMPi)
                     pMPi = mpMap->ReserveMP(IDi);
 
@@ -1067,14 +958,8 @@ void KeyFrame::LoadFromFile(ifstream &f)
 
                 mvpMapPoints.push_back(pMPi);
             }
-
-//            bool bLock;
-//            f.read((char*)&bLock, sizeof(bLock));
-//            mvbMapPointsLock.push_back(bLock);
-
         }
 
-//        cout << "numMPs KF " << mId.first << "|" << mId.second << ": " << numMPs << endl;
 
         u_int16_t numConKFs;
         f.read((char*)&numConKFs, sizeof(numConKFs));
@@ -1088,9 +973,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
 
             KeyFrame* pKFi = mpMap->GetKfPtr(IDi);
 
-//            if(!pKFi)
-//                pKFi = mpMap->GetErasedKfPtr(IDi);
-
             if(!pKFi)
                 pKFi = mpMap->ReserveKF(IDi, mpORBvocabulary, mpKeyFrameDB);
 
@@ -1099,9 +981,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
 
             mConnectedKeyFrameWeights[pKFi] = w;
         }
-
-
-//        cout << "numConKFs KF " << mId.first << "|" << mId.second << ": " << numConKFs << endl;
 
         f.read((char*)&mbFirstConnection, sizeof(mbFirstConnection));
 
@@ -1117,9 +996,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
         {
             KeyFrame* pKFi = mpMap->GetKfPtr(IDpar);
 
-//            if(!pKFi)
-//                pKFi = mpMap->GetErasedKfPtr(IDpar);
-
             if(!pKFi)
                 pKFi = mpMap->ReserveKF(IDpar, mpORBvocabulary, mpKeyFrameDB);
 
@@ -1128,8 +1004,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
 
             mpParent = pKFi;
         }
-
-//        cout << "IDpar.second KF " << mId.first << "|" << mId.second << ": " << IDpar.second << endl;
 
         u_int16_t numChildren;
         f.read((char*)&numChildren, sizeof(numChildren));
@@ -1140,9 +1014,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
 
             KeyFrame* pKFi = mpMap->GetKfPtr(IDi);
 
-//            if(!pKFi)
-//                pKFi = mpMap->GetErasedKfPtr(IDi);
-
             if(!pKFi)
                 pKFi = mpMap->ReserveKF(IDi, mpORBvocabulary, mpKeyFrameDB);
 
@@ -1151,8 +1022,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
 
             mspChildrens.insert(pKFi);
         }
-
-//        cout << "numChildren KF " << mId.first << "|" << mId.second << ": " << numChildren << endl;
 
         u_int16_t numLoopEdges;
         f.read((char*)&numLoopEdges, sizeof(numLoopEdges));
@@ -1163,9 +1032,6 @@ void KeyFrame::LoadFromFile(ifstream &f)
 
             KeyFrame* pKFi = mpMap->GetKfPtr(IDi);
 
-//            if(!pKFi)
-//                pKFi = mpMap->GetErasedKfPtr(IDi);
-
             if(!pKFi)
                 pKFi = mpMap->ReserveKF(IDi, mpORBvocabulary, mpKeyFrameDB);
 
@@ -1175,13 +1041,10 @@ void KeyFrame::LoadFromFile(ifstream &f)
             mspLoopEdges.insert(pKFi);
         }
 
-//        cout << "numLoopEdges KF " << mId.first << "|" << mId.second << ": " << numLoopEdges << endl;
-
         f.read((char*)&mbBad, sizeof(mbBad));
 
         int finalvalue;
         f.read((char*)&finalvalue, sizeof(finalvalue));
-//        if(this->mId.first < 10) cout << "finalvalue KF " << mId.first << "|" << mId.second << ": " << finalvalue << endl;
     }
     mvuRight.clear();
     mvuRight.resize(mvKeysUn.size(), -1.0f);
@@ -1199,9 +1062,9 @@ void KeyFrame::LoadFromFile(ifstream &f)
     vector<cv::Mat> vCurrentDesc = Converter::toDescriptorVector(mDescriptors);
     // Feature vector associate features with nodes in the 4th level (from leaves up)
     // We assume the vocabulary tree has 6 levels, change the 4 otherwise
-if (mpORBvocabulary == NULL) {
-  cout << "the pointer to the ORB vocabulary is empty!!!" << endl;
-}
+    if (mpORBvocabulary == NULL) {
+      cout << "the pointer to the ORB vocabulary is empty!!!" << endl;
+    }
     mpORBvocabulary->transform(vCurrentDesc,mBowVec,mFeatVec,4);
     this->UpdateBestCovisibles();
     mpKeyFrameDB->add(this);

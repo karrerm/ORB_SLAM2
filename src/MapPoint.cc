@@ -431,11 +431,8 @@ int MapPoint::PredictScale(const float &currentDist, Frame* pF)
     return nScale;
 }
 
-void MapPoint::SaveToFile(ofstream &f)//, set<size_t> &sKnownKFs, set<size_t> &sKnownMPs)
+void MapPoint::SaveToFile(ofstream &f)
 {
-//    if(this->mId.first < 10) cout << "Saving MP " << mId.first << "|" << mId.second << endl;
-
-//    unique_lock<mutex> lockOut(mMutexOut,defer_lock);
     unique_lock<mutex> lockFeat(mMutexFeatures,defer_lock);
     unique_lock<mutex> lockPos(mMutexPos,defer_lock);
 
@@ -445,7 +442,6 @@ void MapPoint::SaveToFile(ofstream &f)//, set<size_t> &sKnownKFs, set<size_t> &s
     f.write((char*)&mnFirstKFid, sizeof(mnFirstKFid));
     f.write((char*)&mnFirstFrame, sizeof(mnFirstFrame));
     f.write((char*)&nObs, sizeof(nObs));
-//    if(this->mId.first < 10) cout << "nObs MP " << mId.first << "|" << mId.second << ": " << nObs << endl;
     f.write((char*)&mTrackProjX, sizeof(mTrackProjX));
     f.write((char*)&mTrackProjY, sizeof(mTrackProjY));
     f.write((char*)&mbTrackInView, sizeof(mbTrackInView));
@@ -455,26 +451,12 @@ void MapPoint::SaveToFile(ofstream &f)//, set<size_t> &sKnownKFs, set<size_t> &s
     f.write((char*)&mnLastFrameSeen, sizeof(mnLastFrameSeen));
     f.write((char*)&mnBALocalForKF, sizeof(mnBALocalForKF));
     f.write((char*)&mnFuseCandidateForKF, sizeof(mnFuseCandidateForKF));
-//    f.write((char*)&mInsertedWithKF, sizeof(mInsertedWithKF));
-//    KeyFrame::wp(mLoopPointForKF_LC,f);
-//    KeyFrame::wp(mCorrectedByKF_LC,f);
-//    f.write((char*)&mCorrectedReference_LC, sizeof(mCorrectedReference_LC));
-//    f.write((char*)&mbLoopCorrected, sizeof(mbLoopCorrected));
-//    KeyFrame::wp(mLoopPointForKF_MM,f);
-//    KeyFrame::wp(mCorrectedByKF_MM,f);
-//    f.write((char*)&mCorrectedReference_MM, sizeof(mCorrectedReference_MM));
     f.write((char*)&mnBAGlobalForKF, sizeof(mnBAGlobalForKF));
-//    KeyFrame::wmat(mPosGBA,f);
 
     KeyFrame::wmat(mWorldPos,f);
-//    if(this->mId.first < 10) cout << "mWorldPos MP " << mId.first << "|" << mId.second << ": " << mWorldPos << endl;
-//    KeyFrame::wmat(mRefPos,f);
-//    f.write((char*)&mbPoseLock, sizeof(mbPoseLock));
-//    f.write((char*)&mbPoseChanged, sizeof(mbPoseChanged));
 
     u_int16_t numobs = mObservations.size();
     f.write((char*)&numobs, sizeof(numobs));
-//    if(this->mId.first < 10) cout << "numobs MP " << mId.first << "|" << mId.second << ": " << numobs << endl;
     for(std::map<KeyFrame*,size_t>::iterator mit = mObservations.begin();mit!=mObservations.end();++mit)
     {
         KeyFrame* pKFi = mit->first;
@@ -486,23 +468,9 @@ void MapPoint::SaveToFile(ofstream &f)//, set<size_t> &sKnownKFs, set<size_t> &s
           f.write((char*)&id, sizeof(id));
         }
 
-//        bool bLock;
-//        if(mObservationsLock.count(pKFi))
-//            bLock = true;
-//        else
-//            bLock = false;
-
-//        f.write((char*)&bLock, sizeof(bLock));
-
-//        if(!(sKnownKFs.count(pKFi->mId)))
-//            cout << COUTERROR << "MP " << mId.first << "|" << mId.second << ": Observation KF " << pKFi->mId.first << "|" << pKFi->mId.second << " not known" << endl;
     }
 
-//    f.write((char*)&mMaxObsKFId, sizeof(mMaxObsKFId));
     KeyFrame::wmat(mNormalVector,f);
-//    if(this->mId.first < 10) cout << "mNormalVector MP " << mId.first << "|" << mId.second << ": " << mNormalVector << endl;
-
-//    cout << "MP-mDescriptor.type: " << mDescriptor.type() << endl;
     KeyFrame::wmat(mDescriptor,f);
 
     if(mpRefKF)
@@ -527,14 +495,10 @@ void MapPoint::SaveToFile(ofstream &f)//, set<size_t> &sKnownKFs, set<size_t> &s
     if(mpReplaced)
     {
         f.write((char*)&mpReplaced->mnId, sizeof(mpReplaced->mnId));
-
-//        if(!(sKnownMPs.count(mpReplaced->mId)))
-//            cout << COUTERROR << "MP " << mId.first << "|" << mId.second << ": mpReplaced MP " << mpReplaced->mId.first << "|" << mpReplaced->mId.second << " not known" << endl;
     }
     else
     {
         size_t val = MPRANGE;
-//        f.write((char*)&val, sizeof(val));
         f.write((char*)&val, sizeof(val));
     }
 
@@ -543,17 +507,12 @@ void MapPoint::SaveToFile(ofstream &f)//, set<size_t> &sKnownKFs, set<size_t> &s
 
     int finalvalue = rand();
     f.write((char*)&finalvalue, sizeof(finalvalue));
-//    if(this->mId.first < 10) cout << "finalvalue MP " << mId.first << "|" << mId.second << ": " << finalvalue << endl;
 }
 
 void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
                             KeyFrameDatabase* pKFDB)
 {
-//    if(this->mId.first < 10)
-//        cout << "Loading MP " << mId.first << "|" << mId.second << endl;
-
     {
-//        unique_lock<mutex> lockOut(mMutexOut,defer_lock);
         unique_lock<mutex> lockFeat(mMutexFeatures,defer_lock);
         unique_lock<mutex> lockPos(mMutexPos,defer_lock);
 
@@ -563,7 +522,6 @@ void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
         f.read((char*)&mnFirstKFid, sizeof(mnFirstKFid));
         f.read((char*)&mnFirstFrame, sizeof(mnFirstFrame));
         f.read((char*)&nObs, sizeof(nObs));
-//        if(this->mId.first < 10) cout << "nObs MP " << mId.first << "|" << mId.second << ": " << nObs << endl;
         f.read((char*)&mTrackProjX, sizeof(mTrackProjX));
         f.read((char*)&mTrackProjY, sizeof(mTrackProjY));
         f.read((char*)&mbTrackInView, sizeof(mbTrackInView));
@@ -573,26 +531,12 @@ void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
         f.read((char*)&mnLastFrameSeen, sizeof(mnLastFrameSeen));
         f.read((char*)&mnBALocalForKF, sizeof(mnBALocalForKF));
         f.read((char*)&mnFuseCandidateForKF, sizeof(mnFuseCandidateForKF));
-//        f.read((char*)&mInsertedWithKF, sizeof(mInsertedWithKF));
-//        KeyFrame::rp(mLoopPointForKF_LC,f);
-//        KeyFrame::rp(mCorrectedByKF_LC,f);
-//        f.read((char*)&mCorrectedReference_LC, sizeof(mCorrectedReference_LC));
-//        f.read((char*)&mbLoopCorrected, sizeof(mbLoopCorrected));
-//        KeyFrame::rp(mLoopPointForKF_MM,f);
-//        KeyFrame::rp(mCorrectedByKF_MM,f);
-//        f.read((char*)&mCorrectedReference_MM, sizeof(mCorrectedReference_MM));
         f.read((char*)&mnBAGlobalForKF, sizeof(mnBAGlobalForKF));
-//        KeyFrame::rmat(mPosGBA,f,3,1,5);
 
         KeyFrame::rmat(mWorldPos,f,3,1,5);
-//        if(this->mId.first < 10) cout << "mWorldPos MP " << mId.first << "|" << mId.second << ": " << mWorldPos << endl;
-//        KeyFrame::rmat(mRefPos,f,3,1,5);
-//        f.read((char*)&mbPoseLock, sizeof(mbPoseLock));
-//        f.read((char*)&mbPoseChanged, sizeof(mbPoseChanged));
 
         u_int16_t numobs;
         f.read((char*)&numobs, sizeof(numobs));
-//        if(this->mId.first < 10) cout << "numobs MP " << mId.first << "|" << mId.second << ": " << numobs << endl;
         for(int idx=0;idx<numobs;++idx)
         {
             size_t IDi;
@@ -606,12 +550,8 @@ void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
             }
             f.read((char*)&IDi, sizeof(IDi));
             f.read((char*)&id, sizeof(id));
-//            f.read((char*)&bLock, sizeof(bLock));
 
             KeyFrame* pKFi = mpMap->GetKfPtr(IDi);
-
-//            if(!pKFi)
-//                pKFi = mpMap->GetErasedKfPtr(IDi);
 
             if(!pKFi) {
                 std::cout << "ERROR: Reserves a keyframe!!" << std::endl;
@@ -622,14 +562,9 @@ void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
                 cout << "ERROR: Keyframe does not exist!!" << endl;
 
             mObservations[pKFi] = id;
-
-//            if(bLock)
-//                mObservationsLock[pKFi] = true;
         }
 
-//        f.read((char*)&mMaxObsKFId, sizeof(mMaxObsKFId));
         KeyFrame::rmat(mNormalVector,f,3,1,5);
-//        if(this->mId.first < 10) cout << "mNormalVector MP " << mId.first << "|" << mId.second << ": " << mNormalVector << endl;
 
         KeyFrame::rmat(mDescriptor,f,1,32,0);
 
@@ -641,9 +576,6 @@ void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
             else
             {
                 KeyFrame* pKFi = mpMap->GetKfPtr(IDi);
-
-//                if(!pKFi)
-//                    pKFi = mpMap->GetErasedKfPtr(IDi);
 
                 if(!pKFi) {
                   std::cout << "Reserve Keyframe for reference!!" << std::endl;
@@ -673,9 +605,6 @@ void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
             {
                 MapPoint* pMPi = mpMap->GetMpPtr(IDi);
 
-//                if(!pMPi)
-//                    pMPi = mpMap->GetErasedMpPtr(IDi);
-
                 if(!pMPi)
                     pMPi = mpMap->ReserveMP(IDi);
 
@@ -691,12 +620,7 @@ void MapPoint::LoadFromFile(ifstream &f,ORBVocabulary* pVoc,
 
         int finalvalue;
         f.read((char*)&finalvalue, sizeof(finalvalue));
-//        if(this->mId.first < 10) cout << "finalvalue MP " << mId.first << "|" << mId.second << ": " << finalvalue << endl;
     }
-
-
-    //------------
-//    mbIsEmpty = false;
 }
 
 } //namespace ORB_SLAM
