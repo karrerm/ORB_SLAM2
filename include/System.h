@@ -100,6 +100,9 @@ public:
     // Perform a global bundle adjustment (i.e. before saving state)
     void PerformGlobalBA();
 
+    // Transform the map by a fixed transformation.
+    void TransformMapSE3(const cv::Mat& T);
+
     // Save the state
     void SaveSystemState(const string &filename);
 

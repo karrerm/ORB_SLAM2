@@ -340,6 +340,29 @@ void System::PerformGlobalBA() {
   Optimizer::GlobalBundleAdjustemnt(mpMap, 50);
 }
 
+// Transform the map by a fixed transformation.
+void System::TransformMapSE3(const cv::Mat& T) {
+  cv::Mat R = T.rowRange(0,3).colRange(0,3);
+  // Transform the keyframes
+  std::vector<KeyFrame*>  allKFs = mpMap->GetAllKeyFrames();
+  for (size_t i = 0; i < allKFs.size(); ++i) {
+    KeyFrame* tmpKF = allKFs[i];
+    cv::Mat Twc = tmpKF->GetPoseInverse();
+    cv::Mat Tw2c = T*Twc;
+    tmpKF->SetPose(Tw2c.inv());
+  }
+
+  // Transform the map points
+  std::vector<MapPoint*> allMPs = mpMap->GetAllMapPoints();
+  for (size_t i = 0; i < allMPs.size(); ++i) {
+    MapPoint* tmpMP = allMPs[i];
+    cv::Mat posOld = tmpMP->GetWorldPos();
+    cv::Mat posNew = R*posOld;
+    tmpMP->SetWorldPos(posNew);
+    tmpMP->UpdateNormalAndDepth();
+  }
+}
+
 void System::SaveSystemState(const string &filename) {
   ofstream f;
   f.open(filename.c_str());
